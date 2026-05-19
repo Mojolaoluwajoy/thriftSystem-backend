@@ -31,7 +31,6 @@ public class AuthServiceTest {
 
     @Mock
     private UserRepository userRepository;
-
     @Mock
     private PasswordEncoder passwordEncoder;
 
@@ -120,7 +119,7 @@ public class AuthServiceTest {
 
         AuthResponse response=authService.login(loginRequest);
 
-        assertNull(response);
+        assertNotNull(response);
         assertEquals("token123",response.getToken());
         assertEquals("jane@example.com",response.getEmail());
     }
