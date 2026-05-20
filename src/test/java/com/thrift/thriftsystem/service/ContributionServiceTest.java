@@ -107,7 +107,7 @@ class ContributionServiceTest {
         when(membershipRepository.findByUserIdAndGroupId(any(), any()))
                 .thenReturn(Optional.of(membership));
         when(contributionRepository
-                .existsByUserIdAndGroupIdAndCycleNumber(any(), any(), any()))
+                .existsByUserIdAndGroupIdAndCycleNumber(any(), any(), anyInt()))
                 .thenReturn(false);
         when(contributionMapper.toModel(any(), any(), any(), any(), any()))
                 .thenReturn(contribution);
@@ -131,7 +131,7 @@ class ContributionServiceTest {
         when(membershipRepository.findByUserIdAndGroupId(any(), any()))
                 .thenReturn(Optional.of(membership));
         when(contributionRepository
-                .existsByUserIdAndGroupIdAndCycleNumber(any(), any(), any()))
+                .existsByUserIdAndGroupIdAndCycleNumber(any(), any(), anyInt()))
                 .thenReturn(true);
 
         assertThrows(BadRequestException.class,
