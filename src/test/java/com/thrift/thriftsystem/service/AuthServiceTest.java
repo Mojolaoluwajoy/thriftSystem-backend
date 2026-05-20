@@ -1,6 +1,5 @@
 package com.thrift.thriftsystem.service;
 
-
 import com.thrift.thriftsystem.dto.request.LoginRequest;
 import com.thrift.thriftsystem.dto.request.RegisterRequest;
 import com.thrift.thriftsystem.dto.response.AuthResponse;
@@ -9,7 +8,6 @@ import com.thrift.thriftsystem.model.User;
 import com.thrift.thriftsystem.repository.UserRepository;
 import com.thrift.thriftsystem.security.JwtUtil;
 import com.thrift.thriftsystem.util.UserMapper;
-import org.aspectj.lang.annotation.Before;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,10 +25,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class AuthServiceTest {
+class AuthServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
     @Mock
     private PasswordEncoder passwordEncoder;
 
@@ -54,85 +53,96 @@ public class AuthServiceTest {
     private User user;
 
     @BeforeEach
-    void  setUp() {
+    void setUp() {
         registerRequest = new RegisterRequest();
-        registerRequest.setFirstName("Jane");
+        registerRequest.setFirstName("John");
         registerRequest.setLastName("Doe");
-        registerRequest.setEmail("jane@example.com");
-        registerRequest.setPhoneNumber("08142988584");
+        registerRequest.setEmail("john@example.com");
+        registerRequest.setPhoneNumber("08012345678");
         registerRequest.setPassword("password123");
 
         loginRequest = new LoginRequest();
-        loginRequest.setEmail("jane@example.com");
+        loginRequest.setEmail("john@example.com");
         loginRequest.setPassword("password123");
 
         user = User.builder()
                 .id("user123")
-                .firstName("Jane")
+                .firstName("John")
                 .lastName("Doe")
-                .email("jane@example.com")
-                .phoneNumber("08142988584")
+                .email("john@example.com")
+                .phoneNumber("08012345678")
                 .password("encodedPassword")
                 .enabled(true)
                 .build();
-
     }
+
     @Test
-    void register_success(){
+    void register_Success() {
         when(userRepository.existsByEmail(any())).thenReturn(false);
         when(userRepository.existsByPhoneNumber(any())).thenReturn(false);
-        when(userMapper.toModel(any(),any())).thenReturn(user);
+        when(passwordEncoder.encode(any())).thenReturn("encodedPassword");
+        when(userMapper.toModel(any(), any())).thenReturn(user);
         when(userRepository.save(any())).thenReturn(user);
         when(jwtUtil.generateToken(any())).thenReturn("token123");
 
-        AuthResponse response=authService.register(registerRequest);
+        AuthResponse response = authService.register(registerRequest);
 
         assertNotNull(response);
-        assertEquals("token123",response.getToken());
-        assertEquals("Bearer",response.getType());
-        verify(userRepository,times(1)).save(any());
-        verify(emailService,times(1)).sendWelcomeEmail(any());
+        assertEquals("token123", response.getToken());
+        assertEquals("Bearer", response.getType());
+        verify(userRepository, times(1)).save(any());
+        verify(emailService, times(1)).sendWelcomeEmail(any());
     }
+
     @Test
-    void register_DuplicateEmail_ThrowsException(){
+    void register_DuplicateEmail_ThrowsException() {
         when(userRepository.existsByEmail(any())).thenReturn(true);
 
-        assertThrows(DuplicateResourceException.class,()-> authService.register(registerRequest));
+        assertThrows(DuplicateResourceException.class,
+                () -> authService.register(registerRequest));
 
-        verify(userRepository,never()).save(any());
+        verify(userRepository, never()).save(any());
     }
+
     @Test
-    void register_DuplicatePhone_ThrowsException(){
+    void register_DuplicatePhone_ThrowsException() {
         when(userRepository.existsByEmail(any())).thenReturn(false);
         when(userRepository.existsByPhoneNumber(any())).thenReturn(true);
 
-        assertThrows(DuplicateResourceException.class,()-> authService.register(registerRequest));
+        assertThrows(DuplicateResourceException.class,
+                () -> authService.register(registerRequest));
 
-        verify(userRepository,never()).save(any());
+        verify(userRepository, never()).save(any());
     }
+
     @Test
-    void login_success(){
+    void login_Success() {
         when(authenticationManager.authenticate(any()))
-                .thenReturn(new UsernamePasswordAuthenticationToken(loginRequest.getEmail(),loginRequest.getPassword()));
-        when(userRepository.findByEmail(any())).thenReturn(Optional.of(user));
+                .thenReturn(new UsernamePasswordAuthenticationToken(
+                        loginRequest.getEmail(),
+                        loginRequest.getPassword()));
+        when(userRepository.findByEmail(any()))
+                .thenReturn(Optional.of(user));
         when(jwtUtil.generateToken(any())).thenReturn("token123");
 
-        AuthResponse response=authService.login(loginRequest);
+        AuthResponse response = authService.login(loginRequest);
 
         assertNotNull(response);
-        assertEquals("token123",response.getToken());
-        assertEquals("jane@example.com",response.getEmail());
+        assertEquals("token123", response.getToken());
+        assertEquals("john@example.com", response.getEmail());
     }
 
     @Test
-    void login_DisabledAccount_ThrowsException(){
+    void login_DisabledAccount_ThrowsException() {
         user.setEnabled(false);
-        when(authenticationManager.authenticate(any())).thenReturn(new UsernamePasswordAuthenticationToken(loginRequest.getEmail(),loginRequest.getPassword()));
-        when(userRepository.findByEmail(any())).thenReturn(Optional.of(user));
+        when(authenticationManager.authenticate(any()))
+                .thenReturn(new UsernamePasswordAuthenticationToken(
+                        loginRequest.getEmail(),
+                        loginRequest.getPassword()));
+        when(userRepository.findByEmail(any()))
+                .thenReturn(Optional.of(user));
 
-        assertThrows(Exception.class,()-> authService.login(loginRequest));
+        assertThrows(Exception.class,
+                () -> authService.login(loginRequest));
     }
-
-
-
 }
