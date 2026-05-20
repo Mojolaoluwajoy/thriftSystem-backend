@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     public User getCurrentUser(){
         String email= SecurityContextHolder.getContext().getAuthentication().getName();
@@ -26,20 +27,20 @@ public class UserService {
                 orElseThrow(()-> new ResourceNotFoundException("User not found"));
     }
     public UserResponse getCurrentUserProfile(){
-       return UserMapper.toResponse(getCurrentUser());
+       return userMapper.toResponse(getCurrentUser());
 
     }
 
     public UserResponse getUserById(String id){
         User user = userRepository.findById(id).
                 orElseThrow(()-> new ResourceNotFoundException("User not found with id: "+id));
-        return UserMapper.toResponse(user);
+        return userMapper.toResponse(user);
 
     }
     public List<UserResponse> getAllUsers(){
         return userRepository.findAll()
                 .stream()
-                .map(UserMapper::toResponse)
+                .map(userMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -49,14 +50,14 @@ public class UserService {
         user.setWhatsappNumber(whatsappNumber);
         userRepository.save(user);
         log.info("Whatsapp number updated for : {}", user.getEmail());
-        return UserMapper.toResponse(user);
+        return userMapper.toResponse(user);
     }
     public UserResponse updateProfilePicture(String profilePictureUrl){
         User user = getCurrentUser();
         user.setProfilePicture(profilePictureUrl);
         userRepository.save(user);
         log.info("Profile picture updated for : {}", user.getEmail());
-        return UserMapper.toResponse(user);
+        return userMapper.toResponse(user);
     }
     public List<User> getAllUserModels() {
         return userRepository.findAll();

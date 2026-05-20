@@ -13,7 +13,7 @@ public class GroupMapper {
 
 
 
-    public static ThriftGroup toModel(CreateGroupRequest request,String adminId){
+    public ThriftGroup toModel(CreateGroupRequest request,String adminId){
 
         return ThriftGroup.builder()
                 .name(request.getName())
@@ -31,7 +31,7 @@ public class GroupMapper {
 
     }
 
-    public static GroupResponse toResponse(ThriftGroup group){
+    public GroupResponse toResponse(ThriftGroup group){
         return GroupResponse.builder()
                 .id(group.getId())
                 .name(group.getName())

@@ -81,7 +81,7 @@ public class AuthServiceTest {
     void register_success(){
         when(userRepository.existsByEmail(any())).thenReturn(false);
         when(userRepository.existsByPhoneNumber(any())).thenReturn(false);
-        when(UserMapper.toModel(any(),any())).thenReturn(user);
+        when(userMapper.toModel(any(),any())).thenReturn(user);
         when(userRepository.save(any())).thenReturn(user);
         when(jwtUtil.generateToken(any())).thenReturn("token123");
 

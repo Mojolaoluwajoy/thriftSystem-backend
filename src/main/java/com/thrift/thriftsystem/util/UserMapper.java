@@ -12,7 +12,7 @@ import java.util.Set;
 @Component
 public class UserMapper {
 
-    public static User toModel(RegisterRequest request,String encodedPassword) {
+    public User toModel(RegisterRequest request,String encodedPassword) {
         return User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -25,7 +25,7 @@ public class UserMapper {
                 .build();
     }
 
-    public static UserResponse toResponse(User user) {
+    public UserResponse toResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
@@ -39,7 +39,7 @@ public class UserMapper {
                 .createdAt(user.getCreatedAt())
                 .build();
     }
-    public static AuthResponse toAuthResponse(User user,String token) {
+    public AuthResponse toAuthResponse(User user,String token) {
         return AuthResponse.builder()
                 .token(token)
                 .type("Bearer")

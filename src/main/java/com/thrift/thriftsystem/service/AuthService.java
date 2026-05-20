@@ -37,7 +37,7 @@ public class AuthService {
         if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
             throw new DuplicateResourceException("Phone number already registered");
         }
-        User user = UserMapper.toModel(request,passwordEncoder.encode(request.getPassword()));
+        User user = userMapper.toModel(request,passwordEncoder.encode(request.getPassword()));
 
         userRepository.save(user);
         emailService.sendWelcomeEmail(user);
@@ -45,7 +45,7 @@ public class AuthService {
         String token =jwtUtil.generateToken(user.getEmail());
         log.info("User registered successfully : {}", user.getEmail());
 
-        return UserMapper.toAuthResponse(user,token);
+        return userMapper.toAuthResponse(user,token);
 
 
     }
@@ -60,7 +60,7 @@ public AuthResponse login(LoginRequest request) {
         }
         String token = jwtUtil.generateToken(user.getEmail());
         log.info("User Logged in successfully : {}", user.getEmail());
-        return UserMapper.toAuthResponse(user,token);
+        return userMapper.toAuthResponse(user,token);
 }
 
 

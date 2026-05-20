@@ -29,7 +29,7 @@ public class ContributionService {
     private final MembershipRepository membershipRepository;
     private final ThriftGroupRepository thriftGroupRepository;
     private final UserService userService;
-    //private final ContributionMapper contributionMapper;
+    private final ContributionMapper contributionMapper;
     private final EmailService emailService;
 
     public ContributionResponse initiateContribution(ContributionRequest contributionRequest) {
@@ -45,10 +45,10 @@ public class ContributionService {
             throw new BadRequestException("You have already contributed fot this cycle");
         }
 
-        Contribution contribution = ContributionMapper.toModel(contributionRequest,currentUser.getId(),membership.getId(),group.getContributionAmount(), LocalDateTime.now().plusDays(7));
+        Contribution contribution = contributionMapper.toModel(contributionRequest,currentUser.getId(),membership.getId(),group.getContributionAmount(), LocalDateTime.now().plusDays(7));
             contributionRepository.save(contribution);
             log.info("Contribution has been initiated for user {}", currentUser.getId());
-            return ContributionMapper.toResponse(contribution);
+            return contributionMapper.toResponse(contribution);
     }
 
     public List<ContributionResponse>  getMyContributions(){
@@ -56,13 +56,13 @@ public class ContributionService {
 
         return contributionRepository.findByUserId(currentUser.getId())
                 .stream()
-                .map(ContributionMapper::toResponse)
+                .map(contributionMapper::toResponse)
                 .collect(Collectors.toList());
     }
     public List<ContributionResponse>  getGroupContributions(String groupId){
         return contributionRepository.findByGroupId(groupId)
                 .stream()
-                .map(ContributionMapper::toResponse)
+                .map(contributionMapper::toResponse)
                 .collect(Collectors.toList());
 
     }

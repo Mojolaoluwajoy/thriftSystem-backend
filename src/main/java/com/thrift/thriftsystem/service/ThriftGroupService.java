@@ -31,6 +31,7 @@ public class ThriftGroupService {
     private final UserRepository userRepository;
     private final UserService userService;
     private final EmailService emailService;
+    private final GroupMapper groupMapper;
 
     public GroupResponse createGroup(CreateGroupRequest createGroupRequest) {
         User currentUser = userService.getCurrentUser();
@@ -38,7 +39,7 @@ public class ThriftGroupService {
         if (thriftGroupRepository.existsByNameAndAdminId(createGroupRequest.getName(),currentUser.getId())) {
             throw new DuplicateResourceException("You already have a group with this name");
         }
-        ThriftGroup group= GroupMapper.toModel(createGroupRequest,currentUser.getId());
+        ThriftGroup group= groupMapper.toModel(createGroupRequest,currentUser.getId());
         Membership adminMembership=Membership.builder()
                 .userId(currentUser.getId())
                 .groupId(group.getId())
@@ -53,7 +54,7 @@ public class ThriftGroupService {
 
         log.info("Group created:{] by {}", group.getName(),currentUser.getEmail());
 
-        return GroupMapper.toResponse(group);
+        return groupMapper.toResponse(group);
 
     }
 
@@ -62,14 +63,14 @@ public class ThriftGroupService {
 
         return thriftGroupRepository.findByMemberIdsContains(currentUser.getId())
                 .stream()
-                .map(GroupMapper::toResponse)
+                .map(groupMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     public GroupResponse getGroupById(String groupId) {
         ThriftGroup group=thriftGroupRepository.findById(groupId)
                 .orElseThrow(()->new ResourceNotFoundException("Group not found with id:"+groupId));
-        return GroupMapper.toResponse(group);
+        return groupMapper.toResponse(group);
     }
 
     public GroupResponse addMember(String groupId, String userId) {
@@ -102,12 +103,12 @@ public class ThriftGroupService {
 
             emailService.sendGroupJointedNotification(newMember,group);
             log.info("Member :{}, added to Group:{}",userId,groupId);
-            return GroupMapper.toResponse(group);
+            return groupMapper.toResponse(group);
     }
     public List<GroupResponse> getAllGroups() {
        return thriftGroupRepository.findAll()
                .stream()
-               .map(GroupMapper::toResponse)
+               .map(groupMapper::toResponse)
                .collect(Collectors.toList());
     }
 

@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Component
 public class PayoutMapper {
 
-    public static Payout toModel(String userId, String groupId, String membershipId, BigDecimal amount, String currency, int cycleNumber, LocalDateTime payOutDate){
+    public Payout toModel(String userId, String groupId, String membershipId, BigDecimal amount, String currency, int cycleNumber, LocalDateTime payOutDate){
         return Payout.builder()
                 .userId(userId)
                 .groupId(groupId)
@@ -24,7 +24,7 @@ public class PayoutMapper {
                 .status(PayoutStatus.PENDING)
                 .build();
     }
-    public static PayoutResponse toResponse(Payout payout){
+    public PayoutResponse toResponse(Payout payout){
         return PayoutResponse.builder()
                 .id(payout.getId())
                 .userId(payout.getUserId())

@@ -12,10 +12,11 @@ import java.time.LocalDateTime;
 @Component
 public class ContributionMapper {
 
-    public static Contribution toModel(ContributionRequest contributionRequest, String userId, String membershipId, BigDecimal amount, LocalDateTime dueDate){
+    public  Contribution toModel(ContributionRequest contributionRequest, String userId, String membershipId, BigDecimal amount, LocalDateTime dueDate){
         return Contribution.builder()
                 .userId(userId)
                 .groupId(contributionRequest.getGroupId())
+
                 .membershipId(membershipId)
                 .amount(amount)
                 .currency(contributionRequest.getCurrency())
@@ -26,7 +27,7 @@ public class ContributionMapper {
 
     }
 
-    public static ContributionResponse toResponse(Contribution contribution){
+    public ContributionResponse toResponse(Contribution contribution){
         return ContributionResponse.builder()
                 .id(contribution.getId())
                 .userId(contribution.getUserId())

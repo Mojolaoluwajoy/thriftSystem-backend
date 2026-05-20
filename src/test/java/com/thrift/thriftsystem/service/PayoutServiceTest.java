@@ -158,7 +158,7 @@ class PayoutServiceTest {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(payoutRepository.findByUserId(any()))
                 .thenReturn(List.of(payout));
-        when(PayoutMapper.toResponse(any())).thenReturn(payoutResponse);
+        when(payoutMapper.toResponse(any())).thenReturn(payoutResponse);
 
         List<PayoutResponse> result = payoutService.getMyPayouts();
 

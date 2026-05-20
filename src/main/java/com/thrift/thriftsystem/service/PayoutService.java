@@ -30,6 +30,7 @@ public class PayoutService {
     private final MembershipRepository membershipRepository;
     private final ThriftGroupRepository groupRepository;
     private final UserService userService;
+    private final PayoutMapper payoutMapper;
     private final EmailService emailService;
 
     public PayoutResponse schedulePayout(String groupId,String userId,Integer cycleNumber){
@@ -42,24 +43,24 @@ public class PayoutService {
         if (payoutRepository.existsByUserIdAndGroupIdAndCycleNumber(userId,groupId,cycleNumber)) {
 throw new BadRequestException("Payout already scheduled for this cycle");
         }
-        Payout payout= PayoutMapper.toModel(userId,groupId, membership.getId(), group.getContributionAmount(),group.getCurrency(),cycleNumber, LocalDateTime.now().plusDays(1));
+        Payout payout= payoutMapper.toModel(userId,groupId, membership.getId(), group.getContributionAmount(),group.getCurrency(),cycleNumber, LocalDateTime.now().plusDays(1));
   payoutRepository.save(payout);
   log.info("Payout scheduled for user: {} in group: {}",userId,groupId);
-  return PayoutMapper.toResponse(payout);
+  return payoutMapper.toResponse(payout);
 
     }
     public List <PayoutResponse> getMyPayouts(){
         User currentUser = userService.getCurrentUser();
         return payoutRepository.findByUserId(currentUser.getId())
                 .stream()
-                .map(PayoutMapper::toResponse)
+                .map(payoutMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     public List<PayoutResponse> getGroupPayouts(String groupId){
         return payoutRepository.findByGroupId(groupId)
                 .stream()
-                .map(PayoutMapper::toResponse)
+                .map(payoutMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -76,6 +77,6 @@ throw new BadRequestException("Payout already scheduled for this cycle");
         payoutRepository.save(payout);
 
         log.info("Payout processing: {}", payoutId);
-        return PayoutMapper.toResponse(payout);
+        return payoutMapper.toResponse(payout);
     }
 }
