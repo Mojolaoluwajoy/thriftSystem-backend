@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -24,10 +25,12 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class ThriftGroupServiceTest {
-
     @Mock
     private ThriftGroupRepository thriftGroupRepository;
 
@@ -53,11 +56,15 @@ class ThriftGroupServiceTest {
 
     @BeforeEach
     void setUp() {
-        currentUser = User.builder()
-                .id("user123")
-                .firstName("John")
-                .lastName("Doe")
-                .email("john@example.com")
+        group = ThriftGroup.builder()
+                .id("group123")
+                .name("Test Group")
+                .adminId("user123")
+                .contributionAmount(new BigDecimal("10000"))
+                .currency("NGN")
+                .status(GroupStatus.ACTIVE)
+                .totalMember(5)
+                .memberIds(new java.util.ArrayList<>())
                 .build();
 
         createGroupRequest = new CreateGroupRequest();

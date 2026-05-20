@@ -73,6 +73,7 @@ class AuthServiceTest {
                 .phoneNumber("08012345678")
                 .password("encodedPassword")
                 .enabled(true)
+                .emailVerified(false)
                 .build();
     }
 
@@ -84,7 +85,6 @@ class AuthServiceTest {
         when(userMapper.toModel(any(), any())).thenReturn(user);
         when(userRepository.save(any())).thenReturn(user);
         when(jwtUtil.generateToken(any())).thenReturn("token123");
-
         AuthResponse response = authService.register(registerRequest);
 
         assertNotNull(response);
