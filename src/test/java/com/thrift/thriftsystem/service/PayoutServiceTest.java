@@ -99,9 +99,9 @@ class PayoutServiceTest {
         when(membershipRepository.findByUserIdAndGroupId(any(), any()))
                 .thenReturn(Optional.of(membership));
         when(payoutRepository
-                .existsByUserIdAndGroupIdAndCycleNumber(any(), any(), any()))
+                .existsByUserIdAndGroupIdAndCycleNumber(any(), any(), anyInt()))
                 .thenReturn(false);
-        when(payoutMapper.toModel(any(), any(), any(), any(), any(), any(), any()))
+        when(payoutMapper.toModel(any(), any(), any(), any(), any(), anyInt(), any()))
                 .thenReturn(payout);
         when(payoutRepository.save(any())).thenReturn(payout);
         when(payoutMapper.toResponse(any())).thenReturn(payoutResponse);
@@ -121,7 +121,7 @@ class PayoutServiceTest {
         when(membershipRepository.findByUserIdAndGroupId(any(), any()))
                 .thenReturn(Optional.of(membership));
         when(payoutRepository
-                .existsByUserIdAndGroupIdAndCycleNumber(any(), any(), any()))
+                .existsByUserIdAndGroupIdAndCycleNumber(any(), any(), anyInt()))
                 .thenReturn(true);
 
         assertThrows(BadRequestException.class,
