@@ -47,14 +47,15 @@ public class CurrencyService {
                     exchangeRateClient.getLatestRates(apiKey);
 
             if (response != null && response.get("conversion_rates") != null) {
-                Map<String, Double> rates =
-                        (Map<String, Double>) response.get("conversion_rates");
+                Map<String, Object> rates =
+                        (Map<String, Object>) response.get("conversion_rates");
 
                 List<Currency> currencies = currencyRepository.findByActiveTrue();
                 currencies.forEach(currency -> {
                     if (rates.containsKey(currency.getCode())) {
-                        currency.setExchangeRate(
-                                BigDecimal.valueOf(rates.get(currency.getCode())));
+                        Object rateObj = rates.get(currency.getCode());
+                        BigDecimal rate = new BigDecimal(rateObj.toString());
+                        currency.setExchangeRate(rate);
                         currencyRepository.save(currency);
                         log.info("Rate updated for: {}", currency.getCode());
                     }
