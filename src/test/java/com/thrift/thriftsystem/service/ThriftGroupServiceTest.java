@@ -56,15 +56,11 @@ class ThriftGroupServiceTest {
 
     @BeforeEach
     void setUp() {
-        group = ThriftGroup.builder()
-                .id("group123")
-                .name("Test Group")
-                .adminId("user123")
-                .contributionAmount(new BigDecimal("10000"))
-                .currency("NGN")
-                .status(GroupStatus.ACTIVE)
-                .totalMember(5)
-                .memberIds(new java.util.ArrayList<>())
+        currentUser = User.builder()
+                .id("user123")
+                .firstName("John")
+                .lastName("Doe")
+                .email("john@example.com")
                 .build();
 
         createGroupRequest = new CreateGroupRequest();
@@ -84,6 +80,7 @@ class ThriftGroupServiceTest {
                 .currency("NGN")
                 .status(GroupStatus.ACTIVE)
                 .totalMember(5)
+                .memberIds(new java.util.ArrayList<>())
                 .build();
 
         groupResponse = GroupResponse.builder()
@@ -92,7 +89,6 @@ class ThriftGroupServiceTest {
                 .adminId("user123")
                 .build();
     }
-
     @Test
     void createGroup_Success() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
@@ -107,7 +103,7 @@ class ThriftGroupServiceTest {
 
         assertNotNull(result);
         assertEquals("group123", result.getId());
-        verify(thriftGroupRepository, times(2)).save(any());
+        verify(thriftGroupRepository, times(1)).save(any());
         verify(membershipRepository, times(1)).save(any());
     }
 
