@@ -743,7 +743,7 @@ export default function Dashboard({ user, token, onLogout }) {
               {/* WhatsApp support link */}
               <div style={{ marginTop: "1.5rem" }}>
                 <a
-                  href="https://wa.me/2348000000000?text=Hello%2C%20I%20need%20support%20with%20the%20Thrift%20System%20app"
+                  href="https://wa.me/2349137205789?text=Hello%2C%20I%20need%20support%20with%20the%20Thrift%20System%20app"
                   target="_blank"
                   rel="noreferrer"
                   style={{
