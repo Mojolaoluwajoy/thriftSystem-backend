@@ -76,7 +76,6 @@ class AuthServiceTest {
                 .emailVerified(false)
                 .build();
     }
-
     @Test
     void register_Success() {
         when(userRepository.existsByEmail(any())).thenReturn(false);
@@ -85,6 +84,15 @@ class AuthServiceTest {
         when(userMapper.toModel(any(), any())).thenReturn(user);
         when(userRepository.save(any())).thenReturn(user);
         when(jwtUtil.generateToken(any())).thenReturn("token123");
+        when(userMapper.toAuthResponse(any(), any()))
+                .thenReturn(AuthResponse.builder()
+                        .token("token123")
+                        .type("Bearer")
+                        .id("user123")
+                        .email("john@example.com")
+                        .firstName("John")
+                        .lastName("Doe")
+                        .build());
         AuthResponse response = authService.register(registerRequest);
 
         assertNotNull(response);
@@ -124,6 +132,15 @@ class AuthServiceTest {
         when(userRepository.findByEmail(any()))
                 .thenReturn(Optional.of(user));
         when(jwtUtil.generateToken(any())).thenReturn("token123");
+        when(userMapper.toAuthResponse(any(), any()))
+                .thenReturn(AuthResponse.builder()
+                        .token("token123")
+                        .type("Bearer")
+                        .id("user123")
+                        .email("john@example.com")
+                        .firstName("John")
+                        .lastName("Doe")
+                        .build());
 
         AuthResponse response = authService.login(loginRequest);
 
