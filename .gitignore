@@ -32,3 +32,6 @@ build/
 ### VS Code ###
 .vscode/
 .env
+
+thrift-frontend/node_modules/
+thrift-frontend/dist/
