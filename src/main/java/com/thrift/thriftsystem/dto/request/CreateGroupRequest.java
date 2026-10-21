@@ -4,11 +4,9 @@ import com.thrift.thriftsystem.enums.ContributionFrequency;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import lombok.Data;
-
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import lombok.Data;
 
 @Data
 public class CreateGroupRequest {
@@ -25,10 +23,10 @@ public class CreateGroupRequest {
     @NotBlank(message = "Currency is required")
     private String currency;
 
-    @NotNull(message= "Frequency is required")
+    @NotNull(message = "Frequency is required")
     private ContributionFrequency frequency;
 
-   @NotNull(message = "Start date is required")
+    @NotNull(message = "Start date is required")
     private LocalDateTime startDate;
 
     @NotNull(message = "Total members is required")

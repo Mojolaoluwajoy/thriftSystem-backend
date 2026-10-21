@@ -1,13 +1,12 @@
 package com.thrift.thriftsystem.dto.response;
 
 import com.thrift.thriftsystem.enums.ContributionStatus;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -16,8 +15,8 @@ import java.time.LocalDateTime;
 public class ContributionResponse {
 
     private String id;
-    private String  userId;
-    private String  groupId;
+    private String userId;
+    private String groupId;
     private String membershipId;
     private BigDecimal amount;
     private String currency;

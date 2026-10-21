@@ -1,6 +1,5 @@
 package com.thrift.thriftsystem.service;
 
-import com.thrift.thriftsystem.dto.request.PayoutRequest;
 import com.thrift.thriftsystem.dto.response.PayoutResponse;
 import com.thrift.thriftsystem.enums.ContributionStatus;
 import com.thrift.thriftsystem.enums.PayoutStatus;
@@ -18,15 +17,14 @@ import com.thrift.thriftsystem.repository.PayoutRepository;
 import com.thrift.thriftsystem.repository.ThriftGroupRepository;
 import com.thrift.thriftsystem.repository.UserRepository;
 import com.thrift.thriftsystem.util.PayoutMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
@@ -43,55 +41,69 @@ public class PayoutService {
     private final UserRepository userRepository;
     private final PaystackService paystackService;
 
-    public PayoutResponse schedulePayout(String groupId,String userId,Integer cycleNumber){
-        ThriftGroup group = groupRepository.findById(groupId)
-                .orElseThrow(()->new ResourceNotFoundException("group not found"));
+    public PayoutResponse schedulePayout(String groupId, String userId, Integer cycleNumber) {
+        ThriftGroup group =
+                groupRepository
+                        .findById(groupId)
+                        .orElseThrow(() -> new ResourceNotFoundException("group not found"));
 
-        Membership membership=membershipRepository.findByUserIdAndGroupId(userId,groupId)
-                .orElseThrow(()->new ResourceNotFoundException("membership not found"));
+        Membership membership =
+                membershipRepository
+                        .findByUserIdAndGroupId(userId, groupId)
+                        .orElseThrow(() -> new ResourceNotFoundException("membership not found"));
 
-        if (payoutRepository.existsByUserIdAndGroupIdAndCycleNumber(userId,groupId,cycleNumber)) {
-throw new BadRequestException("Payout already scheduled for this cycle");
+        if (payoutRepository.existsByUserIdAndGroupIdAndCycleNumber(userId, groupId, cycleNumber)) {
+            throw new BadRequestException("Payout already scheduled for this cycle");
         }
         // The recipient collects every member's contribution for the cycle
         long memberCount = membershipRepository.countByGroupId(groupId);
-        BigDecimal potAmount = group.getContributionAmount().multiply(BigDecimal.valueOf(memberCount));
+        BigDecimal potAmount =
+                group.getContributionAmount().multiply(BigDecimal.valueOf(memberCount));
 
-        Payout payout= payoutMapper.toModel(userId,groupId, membership.getId(), potAmount,group.getCurrency(),cycleNumber, LocalDateTime.now().plusDays(1));
-  payoutRepository.save(payout);
-  log.info("Payout scheduled for user: {} in group: {}",userId,groupId);
-  return payoutMapper.toResponse(payout);
-
+        Payout payout =
+                payoutMapper.toModel(
+                        userId,
+                        groupId,
+                        membership.getId(),
+                        potAmount,
+                        group.getCurrency(),
+                        cycleNumber,
+                        LocalDateTime.now().plusDays(1));
+        payoutRepository.save(payout);
+        log.info("Payout scheduled for user: {} in group: {}", userId, groupId);
+        return payoutMapper.toResponse(payout);
     }
-    public List <PayoutResponse> getMyPayouts(){
+
+    public List<PayoutResponse> getMyPayouts() {
         User currentUser = userService.getCurrentUser();
-        return payoutRepository.findByUserId(currentUser.getId())
-                .stream()
+        return payoutRepository.findByUserId(currentUser.getId()).stream()
                 .map(payoutMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
-    public List<PayoutResponse> getGroupPayouts(String groupId){
-        return payoutRepository.findByGroupId(groupId)
-                .stream()
+    public List<PayoutResponse> getGroupPayouts(String groupId) {
+        return payoutRepository.findByGroupId(groupId).stream()
                 .map(payoutMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     public PayoutResponse processPayout(String payoutId) {
-        Payout payout = payoutRepository.findById(payoutId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Payout not found"));
+        Payout payout =
+                payoutRepository
+                        .findById(payoutId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Payout not found"));
 
         PayoutStatus previousStatus = payout.getStatus();
-        boolean retryingFailedTransfer = previousStatus == PayoutStatus.FAILED
-                || previousStatus == PayoutStatus.REVERSED;
+        boolean retryingFailedTransfer =
+                previousStatus == PayoutStatus.FAILED || previousStatus == PayoutStatus.REVERSED;
         if (previousStatus != PayoutStatus.PENDING && !retryingFailedTransfer) {
             throw new BadRequestException("Payout is not in a payable state");
         }
 
-        ThriftGroup group = groupRepository.findById(payout.getGroupId())
-                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+        ThriftGroup group =
+                groupRepository
+                        .findById(payout.getGroupId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
         User currentUser = userService.getCurrentUser();
         if (!currentUser.getId().equals(group.getAdminId())
@@ -104,15 +116,26 @@ throw new BadRequestException("Payout already scheduled for this cycle");
         }
 
         long memberCount = membershipRepository.countByGroupId(payout.getGroupId());
-        long paidCount = contributionRepository.countByGroupIdAndCycleNumberAndStatus(
-                payout.getGroupId(), payout.getCycleNumber(), ContributionStatus.SUCCESSFUL);
+        long paidCount =
+                contributionRepository.countByGroupIdAndCycleNumberAndStatus(
+                        payout.getGroupId(),
+                        payout.getCycleNumber(),
+                        ContributionStatus.SUCCESSFUL);
         if (paidCount < memberCount) {
-            throw new BadRequestException("Not all members have paid for cycle "
-                    + payout.getCycleNumber() + " (" + paidCount + "/" + memberCount + ")");
+            throw new BadRequestException(
+                    "Not all members have paid for cycle "
+                            + payout.getCycleNumber()
+                            + " ("
+                            + paidCount
+                            + "/"
+                            + memberCount
+                            + ")");
         }
 
-        User recipient = userRepository.findById(payout.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("Recipient not found"));
+        User recipient =
+                userRepository
+                        .findById(payout.getUserId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Recipient not found"));
         if (recipient.getPaystackRecipientCode() == null) {
             throw new BadRequestException("Recipient has not added a bank account");
         }
@@ -123,24 +146,29 @@ throw new BadRequestException("Payout already scheduled for this cycle");
         // Keep the same reference when retrying an unconfirmed attempt so Paystack
         // rejects duplicates; a confirmed failure needs a fresh reference
         if (payout.getTransferReference() == null || retryingFailedTransfer) {
-            payout.setTransferReference("payout-" + payout.getId()
-                    + (retryingFailedTransfer ? "-" + System.currentTimeMillis() : ""));
+            payout.setTransferReference(
+                    "payout-"
+                            + payout.getId()
+                            + (retryingFailedTransfer ? "-" + System.currentTimeMillis() : ""));
         }
         payout.setFailureReason(null);
         payoutRepository.save(payout);
 
         try {
-            Map<String, Object> response = paystackService.initiateTransfer(
-                    recipient.getPaystackRecipientCode(),
-                    payout.getAmount(),
-                    group.getName() + " payout - cycle " + payout.getCycleNumber(),
-                    payout.getTransferReference());
+            Map<String, Object> response =
+                    paystackService.initiateTransfer(
+                            recipient.getPaystackRecipientCode(),
+                            payout.getAmount(),
+                            group.getName() + " payout - cycle " + payout.getCycleNumber(),
+                            payout.getTransferReference());
 
             Map<String, Object> data = (Map<String, Object>) response.get("data");
             if (data != null) {
                 payout.setPayStackTransferCode((String) data.get("transfer_code"));
                 if ("otp".equals(data.get("status"))) {
-                    log.warn("Transfer {} is waiting for OTP; disable transfer OTP in Paystack", payout.getTransferReference());
+                    log.warn(
+                            "Transfer {} is waiting for OTP; disable transfer OTP in Paystack",
+                            payout.getTransferReference());
                 }
             }
         } catch (BadRequestException e) {
@@ -157,14 +185,22 @@ throw new BadRequestException("Payout already scheduled for this cycle");
     }
 
     public void handleTransferEvent(String event, String reference, String reason) {
-        Payout payout = payoutRepository.findByTransferReference(reference)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Payout not found for reference: " + reference));
+        Payout payout =
+                payoutRepository
+                        .findByTransferReference(reference)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Payout not found for reference: " + reference));
 
         // Paystack can deliver the same event more than once
         if (payout.getStatus() != PayoutStatus.PROCESSING
                 && payout.getStatus() != PayoutStatus.PENDING) {
-            log.info("Ignoring {} for payout {} in state {}", event, payout.getId(), payout.getStatus());
+            log.info(
+                    "Ignoring {} for payout {} in state {}",
+                    event,
+                    payout.getId(),
+                    payout.getStatus());
             return;
         }
 
@@ -174,23 +210,28 @@ throw new BadRequestException("Payout already scheduled for this cycle");
                 payout.setProcessedAt(LocalDateTime.now());
                 payoutRepository.save(payout);
 
-                membershipRepository.findById(payout.getMembershipId()).ifPresent(membership -> {
-                    membership.setHasCollected(true);
-                    membership.setCollectionDate(LocalDateTime.now());
-                    membershipRepository.save(membership);
-                });
+                membershipRepository
+                        .findById(payout.getMembershipId())
+                        .ifPresent(
+                                membership -> {
+                                    membership.setHasCollected(true);
+                                    membership.setCollectionDate(LocalDateTime.now());
+                                    membershipRepository.save(membership);
+                                });
 
                 User user = userRepository.findById(payout.getUserId()).orElse(null);
                 ThriftGroup group = groupRepository.findById(payout.getGroupId()).orElse(null);
                 if (user != null && group != null) {
-                    emailService.sendPayoutNotification(user, group,
-                            payout.getAmount() + " " + payout.getCurrency());
+                    emailService.sendPayoutNotification(
+                            user, group, payout.getAmount() + " " + payout.getCurrency());
                 }
                 log.info("Payout successful: {}", payout.getId());
             }
             case "transfer.failed", "transfer.reversed" -> {
-                payout.setStatus("transfer.failed".equals(event)
-                        ? PayoutStatus.FAILED : PayoutStatus.REVERSED);
+                payout.setStatus(
+                        "transfer.failed".equals(event)
+                                ? PayoutStatus.FAILED
+                                : PayoutStatus.REVERSED);
                 payout.setFailureReason(reason);
                 payoutRepository.save(payout);
                 log.error("Payout {} {}: {}", payout.getId(), payout.getStatus(), reason);

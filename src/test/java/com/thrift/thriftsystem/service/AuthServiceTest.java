@@ -1,5 +1,9 @@
 package com.thrift.thriftsystem.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import com.thrift.thriftsystem.dto.request.LoginRequest;
 import com.thrift.thriftsystem.dto.request.RegisterRequest;
 import com.thrift.thriftsystem.dto.response.AuthResponse;
@@ -8,6 +12,7 @@ import com.thrift.thriftsystem.model.User;
 import com.thrift.thriftsystem.repository.UserRepository;
 import com.thrift.thriftsystem.security.JwtUtil;
 import com.thrift.thriftsystem.util.UserMapper;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,35 +23,22 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
 
-    @Mock
-    private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
 
-    @Mock
-    private PasswordEncoder passwordEncoder;
+    @Mock private PasswordEncoder passwordEncoder;
 
-    @Mock
-    private AuthenticationManager authenticationManager;
+    @Mock private AuthenticationManager authenticationManager;
 
-    @Mock
-    private JwtUtil jwtUtil;
+    @Mock private JwtUtil jwtUtil;
 
-    @Mock
-    private EmailService emailService;
+    @Mock private EmailService emailService;
 
-    @Mock
-    private UserMapper userMapper;
+    @Mock private UserMapper userMapper;
 
-    @InjectMocks
-    private AuthService authService;
+    @InjectMocks private AuthService authService;
 
     private RegisterRequest registerRequest;
     private LoginRequest loginRequest;
@@ -65,17 +57,19 @@ class AuthServiceTest {
         loginRequest.setEmail("john@example.com");
         loginRequest.setPassword("password123");
 
-        user = User.builder()
-                .id("user123")
-                .firstName("John")
-                .lastName("Doe")
-                .email("john@example.com")
-                .phoneNumber("08012345678")
-                .password("encodedPassword")
-                .enabled(true)
-                .emailVerified(false)
-                .build();
+        user =
+                User.builder()
+                        .id("user123")
+                        .firstName("John")
+                        .lastName("Doe")
+                        .email("john@example.com")
+                        .phoneNumber("08012345678")
+                        .password("encodedPassword")
+                        .enabled(true)
+                        .emailVerified(false)
+                        .build();
     }
+
     @Test
     void register_Success() {
         when(userRepository.existsByEmail(any())).thenReturn(false);
@@ -85,14 +79,15 @@ class AuthServiceTest {
         when(userRepository.save(any())).thenReturn(user);
         when(jwtUtil.generateToken(any())).thenReturn("token123");
         when(userMapper.toAuthResponse(any(), any()))
-                .thenReturn(AuthResponse.builder()
-                        .token("token123")
-                        .type("Bearer")
-                        .id("user123")
-                        .email("john@example.com")
-                        .firstName("John")
-                        .lastName("Doe")
-                        .build());
+                .thenReturn(
+                        AuthResponse.builder()
+                                .token("token123")
+                                .type("Bearer")
+                                .id("user123")
+                                .email("john@example.com")
+                                .firstName("John")
+                                .lastName("Doe")
+                                .build());
         AuthResponse response = authService.register(registerRequest);
 
         assertNotNull(response);
@@ -106,8 +101,7 @@ class AuthServiceTest {
     void register_DuplicateEmail_ThrowsException() {
         when(userRepository.existsByEmail(any())).thenReturn(true);
 
-        assertThrows(DuplicateResourceException.class,
-                () -> authService.register(registerRequest));
+        assertThrows(DuplicateResourceException.class, () -> authService.register(registerRequest));
 
         verify(userRepository, never()).save(any());
     }
@@ -117,8 +111,7 @@ class AuthServiceTest {
         when(userRepository.existsByEmail(any())).thenReturn(false);
         when(userRepository.existsByPhoneNumber(any())).thenReturn(true);
 
-        assertThrows(DuplicateResourceException.class,
-                () -> authService.register(registerRequest));
+        assertThrows(DuplicateResourceException.class, () -> authService.register(registerRequest));
 
         verify(userRepository, never()).save(any());
     }
@@ -126,21 +119,21 @@ class AuthServiceTest {
     @Test
     void login_Success() {
         when(authenticationManager.authenticate(any()))
-                .thenReturn(new UsernamePasswordAuthenticationToken(
-                        loginRequest.getEmail(),
-                        loginRequest.getPassword()));
-        when(userRepository.findByEmail(any()))
-                .thenReturn(Optional.of(user));
+                .thenReturn(
+                        new UsernamePasswordAuthenticationToken(
+                                loginRequest.getEmail(), loginRequest.getPassword()));
+        when(userRepository.findByEmail(any())).thenReturn(Optional.of(user));
         when(jwtUtil.generateToken(any())).thenReturn("token123");
         when(userMapper.toAuthResponse(any(), any()))
-                .thenReturn(AuthResponse.builder()
-                        .token("token123")
-                        .type("Bearer")
-                        .id("user123")
-                        .email("john@example.com")
-                        .firstName("John")
-                        .lastName("Doe")
-                        .build());
+                .thenReturn(
+                        AuthResponse.builder()
+                                .token("token123")
+                                .type("Bearer")
+                                .id("user123")
+                                .email("john@example.com")
+                                .firstName("John")
+                                .lastName("Doe")
+                                .build());
 
         AuthResponse response = authService.login(loginRequest);
 
@@ -153,13 +146,11 @@ class AuthServiceTest {
     void login_DisabledAccount_ThrowsException() {
         user.setEnabled(false);
         when(authenticationManager.authenticate(any()))
-                .thenReturn(new UsernamePasswordAuthenticationToken(
-                        loginRequest.getEmail(),
-                        loginRequest.getPassword()));
-        when(userRepository.findByEmail(any()))
-                .thenReturn(Optional.of(user));
+                .thenReturn(
+                        new UsernamePasswordAuthenticationToken(
+                                loginRequest.getEmail(), loginRequest.getPassword()));
+        when(userRepository.findByEmail(any())).thenReturn(Optional.of(user));
 
-        assertThrows(Exception.class,
-                () -> authService.login(loginRequest));
+        assertThrows(Exception.class, () -> authService.login(loginRequest));
     }
 }

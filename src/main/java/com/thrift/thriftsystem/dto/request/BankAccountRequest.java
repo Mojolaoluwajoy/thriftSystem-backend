@@ -16,5 +16,4 @@ public class BankAccountRequest {
 
     @NotBlank(message = "Account name is required")
     private String accountName;
-
 }

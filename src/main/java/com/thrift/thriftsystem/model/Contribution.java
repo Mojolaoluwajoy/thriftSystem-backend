@@ -1,6 +1,8 @@
 package com.thrift.thriftsystem.model;
 
 import com.thrift.thriftsystem.enums.ContributionStatus;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,9 +12,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -20,8 +19,7 @@ import java.time.LocalDateTime;
 @Document(collection = "contributions")
 public class Contribution {
 
-    @Id
-    private String id;
+    @Id private String id;
 
     private String userId;
     private String groupId;
@@ -29,23 +27,17 @@ public class Contribution {
 
     private BigDecimal amount;
     private String currency;
-private Integer cycleNumber;
-   // @CreatedDate
-   // private LocalDateTime createdDate;
-    @LastModifiedDate
-    private String paystackReference;
+    private Integer cycleNumber;
+    // @CreatedDate
+    // private LocalDateTime createdDate;
+    @LastModifiedDate private String paystackReference;
     private String paystackTransactionId;
 
-    @Builder.Default
-    private ContributionStatus status=ContributionStatus.PENDING;
+    @Builder.Default private ContributionStatus status = ContributionStatus.PENDING;
 
     private LocalDateTime dueDate;
     private LocalDateTime paidAt;
 
-    @CreatedDate
-    private LocalDateTime createdDate;
-    @CreatedDate
-    private LocalDateTime updatedDate;
+    @CreatedDate private LocalDateTime createdDate;
+    @CreatedDate private LocalDateTime updatedDate;
 }
-
-

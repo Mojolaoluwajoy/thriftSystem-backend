@@ -1,18 +1,23 @@
 package com.thrift.thriftsystem.util;
 
-import com.thrift.thriftsystem.dto.request.PayoutRequest;
 import com.thrift.thriftsystem.dto.response.PayoutResponse;
 import com.thrift.thriftsystem.enums.PayoutStatus;
 import com.thrift.thriftsystem.model.Payout;
-import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import org.springframework.stereotype.Component;
 
 @Component
 public class PayoutMapper {
 
-    public Payout toModel(String userId, String groupId, String membershipId, BigDecimal amount, String currency, int cycleNumber, LocalDateTime payOutDate){
+    public Payout toModel(
+            String userId,
+            String groupId,
+            String membershipId,
+            BigDecimal amount,
+            String currency,
+            int cycleNumber,
+            LocalDateTime payOutDate) {
         return Payout.builder()
                 .userId(userId)
                 .groupId(groupId)
@@ -24,7 +29,8 @@ public class PayoutMapper {
                 .status(PayoutStatus.PENDING)
                 .build();
     }
-    public PayoutResponse toResponse(Payout payout){
+
+    public PayoutResponse toResponse(Payout payout) {
         return PayoutResponse.builder()
                 .id(payout.getId())
                 .userId(payout.getUserId())
@@ -40,6 +46,5 @@ public class PayoutMapper {
                 .processedAt(payout.getProcessedAt())
                 .createdAt(payout.getCreatedDate())
                 .build();
-
     }
 }

@@ -1,5 +1,7 @@
 package com.thrift.thriftsystem.model;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,9 +11,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -19,8 +18,7 @@ import java.time.LocalDateTime;
 @Document(collection = "currencies")
 public class Currency {
 
-    @Id
-    private String id;
+    @Id private String id;
 
     @Indexed(unique = true)
     private String code;
@@ -30,12 +28,9 @@ public class Currency {
 
     private BigDecimal exchangeRate;
 
-    @Builder.Default
-    private boolean active = true;
+    @Builder.Default private boolean active = true;
 
-    @CreatedDate
-    private LocalDateTime createdDate;
+    @CreatedDate private LocalDateTime createdDate;
 
-    @CreatedDate
-    private LocalDateTime updatedDate;
+    @CreatedDate private LocalDateTime updatedDate;
 }

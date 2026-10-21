@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  backend:
+    name: Backend (format + tests)
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+
+    # Placeholder values so the Spring context can start; no real secrets are used in CI
+    env:
+      MONGO_URI: mongodb://localhost:27017/thriftdb
+      MONGO_DATABASE: thriftdb
+      MONGO_SSL_ENABLED: "false"
+      JWT_SECRET: ci-only-secret-key-that-is-long-enough-for-hs512-signing-0123456789abcdef
+      JWT_EXPIRATION: "86400000"
+      MAIL_USERNAME: ci@example.com
+      MAIL_PASSWORD: ci-password
+      SUPER_ADMIN_EMAIL: admin@example.com
+      SUPER_ADMIN_PASSWORD: ci-admin-password
+      SUPER_ADMIN_FIRSTNAME: CI
+      SUPER_ADMIN_LASTNAME: Admin
+      SUPPORT_WHATSAPP: "0000000000"
+      EXCHANGE_RATE_API_KEY: ci-key
+      EXCHANGE_RATE_BASE_URL: https://v6.exchangerate-api.com/v6
+      PAYSTACK_SECRET_KEY: sk_test_ci
+      PAYSTACK_BASE_URL: https://api.paystack.co
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Check formatting
+        run: ./mvnw -B spotless:check
+
+      - name: Run tests
+        run: ./mvnw -B test
+
+  frontend:
+    name: Frontend (build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: thriftSystemFrontEnd
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: thriftSystemFrontEnd/package-lock.json
+
+      - run: npm ci
+      - run: npm run build

@@ -2,6 +2,10 @@ package com.thrift.thriftsystem.model;
 
 import com.thrift.thriftsystem.enums.ContributionFrequency;
 import com.thrift.thriftsystem.enums.GroupStatus;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,11 +15,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -23,8 +22,7 @@ import java.util.List;
 @Document(collation = "thrift_groups")
 public class ThriftGroup {
 
-    @Id
-    private String id;
+    @Id private String id;
 
     private String name;
     private String description;
@@ -33,8 +31,7 @@ public class ThriftGroup {
     private BigDecimal contributionAmount;
     private String currency;
 
-    @Builder.Default
-    private GroupStatus status =GroupStatus.ACTIVE;
+    @Builder.Default private GroupStatus status = GroupStatus.ACTIVE;
 
     private Integer totalMember;
     private Integer currentCycle;
@@ -45,12 +42,9 @@ public class ThriftGroup {
 
     private ContributionFrequency frequency;
 
-    @Builder.Default
-    private List<String> memberIds = new ArrayList<>();
+    @Builder.Default private List<String> memberIds = new ArrayList<>();
 
-    @CreatedDate
-    private LocalDateTime createdDate;
+    @CreatedDate private LocalDateTime createdDate;
 
-    @LastModifiedDate
-    private LocalDateTime lastModifiedDate;
+    @LastModifiedDate private LocalDateTime lastModifiedDate;
 }

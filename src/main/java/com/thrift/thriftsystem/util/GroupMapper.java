@@ -4,16 +4,13 @@ import com.thrift.thriftsystem.dto.request.CreateGroupRequest;
 import com.thrift.thriftsystem.dto.response.GroupResponse;
 import com.thrift.thriftsystem.enums.GroupStatus;
 import com.thrift.thriftsystem.model.ThriftGroup;
-import org.springframework.stereotype.Component;
-
 import java.time.LocalDateTime;
+import org.springframework.stereotype.Component;
 
 @Component
 public class GroupMapper {
 
-
-
-    public ThriftGroup toModel(CreateGroupRequest request,String adminId){
+    public ThriftGroup toModel(CreateGroupRequest request, String adminId) {
 
         return ThriftGroup.builder()
                 .name(request.getName())
@@ -22,16 +19,18 @@ public class GroupMapper {
                 .contributionAmount(request.getContributionAmount())
                 .currency(request.getCurrency())
                 .frequency(request.getFrequency())
-                .startDate(request.getStartDate() !=null? request.getStartDate():LocalDateTime.now())
+                .startDate(
+                        request.getStartDate() != null
+                                ? request.getStartDate()
+                                : LocalDateTime.now())
                 .totalMember(request.getTotalMembers())
                 .totalCycles(request.getTotalMembers())
                 .currentCycle(1)
                 .status(GroupStatus.ACTIVE)
                 .build();
-
     }
 
-    public GroupResponse toResponse(ThriftGroup group){
+    public GroupResponse toResponse(ThriftGroup group) {
         return GroupResponse.builder()
                 .id(group.getId())
                 .name(group.getName())

@@ -1,5 +1,9 @@
 package com.thrift.thriftsystem.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import com.thrift.thriftsystem.dto.request.CreateGroupRequest;
 import com.thrift.thriftsystem.dto.response.GroupResponse;
 import com.thrift.thriftsystem.enums.ContributionFrequency;
@@ -9,6 +13,10 @@ import com.thrift.thriftsystem.model.ThriftGroup;
 import com.thrift.thriftsystem.model.User;
 import com.thrift.thriftsystem.repository.MembershipRepository;
 import com.thrift.thriftsystem.repository.ThriftGroupRepository;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,38 +24,22 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class ThriftGroupServiceTest {
-    @Mock
-    private ThriftGroupRepository thriftGroupRepository;
+    @Mock private ThriftGroupRepository thriftGroupRepository;
 
-    @Mock
-    private MembershipRepository membershipRepository;
+    @Mock private MembershipRepository membershipRepository;
 
-    @Mock
-    private UserService userService;
+    @Mock private UserService userService;
 
-    @Mock
-    private EmailService emailService;
+    @Mock private EmailService emailService;
 
-    @Mock
-    private com.thrift.thriftsystem.util.GroupMapper groupMapper;
+    @Mock private com.thrift.thriftsystem.util.GroupMapper groupMapper;
 
-    @InjectMocks
-    private ThriftGroupService thriftGroupService;
+    @InjectMocks private ThriftGroupService thriftGroupService;
 
     private User currentUser;
     private ThriftGroup group;
@@ -56,12 +48,13 @@ class ThriftGroupServiceTest {
 
     @BeforeEach
     void setUp() {
-        currentUser = User.builder()
-                .id("user123")
-                .firstName("John")
-                .lastName("Doe")
-                .email("john@example.com")
-                .build();
+        currentUser =
+                User.builder()
+                        .id("user123")
+                        .firstName("John")
+                        .lastName("Doe")
+                        .email("john@example.com")
+                        .build();
 
         createGroupRequest = new CreateGroupRequest();
         createGroupRequest.setName("Test Group");
@@ -72,34 +65,35 @@ class ThriftGroupServiceTest {
         createGroupRequest.setStartDate(LocalDateTime.now().plusDays(1));
         createGroupRequest.setTotalMembers(5);
 
-        group = ThriftGroup.builder()
-                .id("group123")
-                .name("Test Group")
-                .adminId("user123")
-                .contributionAmount(new BigDecimal("10000"))
-                .currency("NGN")
-                .status(GroupStatus.ACTIVE)
-                .totalMember(5)
-                .memberIds(new java.util.ArrayList<>())
-                .build();
+        group =
+                ThriftGroup.builder()
+                        .id("group123")
+                        .name("Test Group")
+                        .adminId("user123")
+                        .contributionAmount(new BigDecimal("10000"))
+                        .currency("NGN")
+                        .status(GroupStatus.ACTIVE)
+                        .totalMember(5)
+                        .memberIds(new java.util.ArrayList<>())
+                        .build();
 
-        groupResponse = GroupResponse.builder()
-                .id("group123")
-                .name("Test Group")
-                .adminId("user123")
-                .build();
+        groupResponse =
+                GroupResponse.builder()
+                        .id("group123")
+                        .name("Test Group")
+                        .adminId("user123")
+                        .build();
     }
+
     @Test
     void createGroup_Success() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(thriftGroupRepository.existsByNameAndAdminId(any(), any()))
-                .thenReturn(false);
+        when(thriftGroupRepository.existsByNameAndAdminId(any(), any())).thenReturn(false);
         when(groupMapper.toModel(any(), any())).thenReturn(group);
         when(thriftGroupRepository.save(any())).thenReturn(group);
         when(groupMapper.toResponse(any())).thenReturn(groupResponse);
 
-        GroupResponse result = thriftGroupService
-                .createGroup(createGroupRequest);
+        GroupResponse result = thriftGroupService.createGroup(createGroupRequest);
 
         assertNotNull(result);
         assertEquals("group123", result.getId());
@@ -110,10 +104,10 @@ class ThriftGroupServiceTest {
     @Test
     void createGroup_DuplicateName_ThrowsException() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(thriftGroupRepository.existsByNameAndAdminId(any(), any()))
-                .thenReturn(true);
+        when(thriftGroupRepository.existsByNameAndAdminId(any(), any())).thenReturn(true);
 
-        assertThrows(DuplicateResourceException.class,
+        assertThrows(
+                DuplicateResourceException.class,
                 () -> thriftGroupService.createGroup(createGroupRequest));
 
         verify(thriftGroupRepository, never()).save(any());
@@ -122,8 +116,7 @@ class ThriftGroupServiceTest {
     @Test
     void getMyGroups_Success() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(thriftGroupRepository.findByMemberIdsContains(any()))
-                .thenReturn(List.of(group));
+        when(thriftGroupRepository.findByMemberIdsContains(any())).thenReturn(List.of(group));
         when(groupMapper.toResponse(any())).thenReturn(groupResponse);
 
         List<GroupResponse> result = thriftGroupService.getMyGroups();
@@ -134,8 +127,7 @@ class ThriftGroupServiceTest {
 
     @Test
     void getGroupById_Success() {
-        when(thriftGroupRepository.findById("group123"))
-                .thenReturn(Optional.of(group));
+        when(thriftGroupRepository.findById("group123")).thenReturn(Optional.of(group));
         when(groupMapper.toResponse(any())).thenReturn(groupResponse);
 
         GroupResponse result = thriftGroupService.getGroupById("group123");
@@ -147,13 +139,10 @@ class ThriftGroupServiceTest {
     @Test
     void addMember_GroupFull_ThrowsException() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(thriftGroupRepository.findByIdAndAdminId(any(), any()))
-                .thenReturn(Optional.of(group));
-        when(membershipRepository.existsByUserIdAndGroupId(any(), any()))
-                .thenReturn(false);
+        when(thriftGroupRepository.findByIdAndAdminId(any(), any())).thenReturn(Optional.of(group));
+        when(membershipRepository.existsByUserIdAndGroupId(any(), any())).thenReturn(false);
         when(membershipRepository.countByGroupId(any())).thenReturn(5L);
 
-        assertThrows(Exception.class,
-                () -> thriftGroupService.addMember("group123", "user456"));
+        assertThrows(Exception.class, () -> thriftGroupService.addMember("group123", "user456"));
     }
 }

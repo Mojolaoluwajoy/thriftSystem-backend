@@ -1,14 +1,12 @@
 package com.thrift.thriftsystem.service;
 
 import com.thrift.thriftsystem.model.User;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -42,8 +40,7 @@ public class SchedulerService {
             String holidayName = holidayService.getHolidayName(today);
             List<User> users = userService.getAllUserModels();
 
-            users.forEach(user ->
-                    emailService.sendHolidayNotification(user, holidayName));
+            users.forEach(user -> emailService.sendHolidayNotification(user, holidayName));
 
             log.info("Holiday notifications sent to {} users", users.size());
         }

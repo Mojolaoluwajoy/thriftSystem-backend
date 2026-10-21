@@ -4,19 +4,22 @@ import com.thrift.thriftsystem.dto.request.ContributionRequest;
 import com.thrift.thriftsystem.dto.response.ContributionResponse;
 import com.thrift.thriftsystem.enums.ContributionStatus;
 import com.thrift.thriftsystem.model.Contribution;
-import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import org.springframework.stereotype.Component;
 
 @Component
 public class ContributionMapper {
 
-    public  Contribution toModel(ContributionRequest contributionRequest, String userId, String membershipId, BigDecimal amount, LocalDateTime dueDate){
+    public Contribution toModel(
+            ContributionRequest contributionRequest,
+            String userId,
+            String membershipId,
+            BigDecimal amount,
+            LocalDateTime dueDate) {
         return Contribution.builder()
                 .userId(userId)
                 .groupId(contributionRequest.getGroupId())
-
                 .membershipId(membershipId)
                 .amount(amount)
                 .currency(contributionRequest.getCurrency())
@@ -24,10 +27,9 @@ public class ContributionMapper {
                 .dueDate(dueDate)
                 .status(ContributionStatus.PENDING)
                 .build();
-
     }
 
-    public ContributionResponse toResponse(Contribution contribution){
+    public ContributionResponse toResponse(Contribution contribution) {
         return ContributionResponse.builder()
                 .id(contribution.getId())
                 .userId(contribution.getUserId())
@@ -43,6 +45,4 @@ public class ContributionMapper {
                 .createdAt(contribution.getCreatedDate())
                 .build();
     }
-
-
 }
