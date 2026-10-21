@@ -27,16 +27,16 @@ public class DataSeeder implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final CurrencyService currencyService;
 
-    @Value("${SUPER_ADMIN_EMAIL")
+    @Value("${SUPER_ADMIN_EMAIL}")
     private String superAdminEmail;
 
-    @Value("${SUPER_ADMIN_PASSWORD")
+    @Value("${SUPER_ADMIN_PASSWORD}")
     private String superAdminPassword;
 
-    @Value("${SUPER_ADMIN_FIRSTNAME")
+    @Value("${SUPER_ADMIN_FIRSTNAME}")
     private String superAdminFirstName;
 
-    @Value("${SUPER_ADMIN_LASTNAME")
+    @Value("${SUPER_ADMIN_LASTNAME}")
     private String superAdminLastName;
 
     @Override
@@ -46,7 +46,9 @@ public class DataSeeder implements CommandLineRunner {
         currencyService.updateExchangeRates();
     }
 
-    private void seedCurrencies() {
+    private void seedSuperAdmin() {
+        removePlaceholderSuperAdmin();
+
         if (!userRepository.existsByEmail(superAdminEmail)) {
             User superAdmin =
                     User.builder()
@@ -65,7 +67,19 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
 
-    private void seedSuperAdmin() {
+    // Earlier versions had unclosed @Value placeholders, so a super admin was saved with the
+    // literal email "${SUPER_ADMIN_EMAIL"; remove it now that the real one is created
+    private void removePlaceholderSuperAdmin() {
+        userRepository
+                .findByEmail("${SUPER_ADMIN_EMAIL")
+                .ifPresent(
+                        user -> {
+                            userRepository.delete(user);
+                            log.info("Removed placeholder super admin account");
+                        });
+    }
+
+    private void seedCurrencies() {
         List<Currency> defaultCurrencies =
                 Arrays.asList(
                         Currency.builder()
