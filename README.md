@@ -70,6 +70,7 @@ http://localhost:8080/swagger-ui/index.html
 | `MONGO_USERNAME` | MongoDB username |
 | `MONGO_PASSWORD` | MongoDB password |
 | `MONGO_DATABASE` | MongoDB database name |
+| `MONGO_URI` | Full MongoDB connection string (e.g. your Atlas URI) |
 | `JWT_SECRET` | JWT secret key (min 64 chars) |
 | `JWT_EXPIRATION` | JWT expiration in milliseconds |
 | `MAIL_USERNAME` | Gmail address |
