@@ -1,5 +1,7 @@
 package com.thrift.thriftsystem.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thrift.thriftsystem.service.PaymentService;
 import com.thrift.thriftsystem.service.WebhookService;
 import lombok.RequiredArgsConstructor;
@@ -21,18 +23,23 @@ public class WebhookController {
 
     private final PaymentService paymentService;
     private final WebhookService webhookService;
+    private final ObjectMapper objectMapper;
 
 
     @PostMapping("/paystack")
     public ResponseEntity<String> handlePaystackWebhook(
             @RequestHeader("x-paystack-signature") String signature,
-            @RequestBody Map<String, Object> payload) {
+            @RequestBody String rawPayload) {
         try {
-            if (!webhookService.isValidSignature(payload.toString(), signature)) {
+            // Paystack signs the raw request body, so validate before parsing
+            if (!webhookService.isValidSignature(rawPayload, signature)) {
                 log.error("Invalid webhook signature");
                 return new ResponseEntity<>("Invalid signature",
                         HttpStatus.UNAUTHORIZED);
             }
+
+            Map<String, Object> payload = objectMapper.readValue(
+                    rawPayload, new TypeReference<Map<String, Object>>() {});
 
             String event = (String) payload.get("event");
             Map<String, Object> data =

@@ -55,7 +55,7 @@ export default function Dashboard({ user, token, onLogout }) {
 
   const fetchGroups = async () => {
     try {
-      const res = await fetch(`${API_BASE}/groups/my-groups`, { headers });
+      const res = await fetch(`${API_BASE}/group/my-groups`, { headers });
       const data = await res.json();
       if (data.success) setGroups(data.data || []);
     } catch {}
@@ -89,7 +89,7 @@ export default function Dashboard({ user, token, onLogout }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/groups`, {
+      const res = await fetch(`${API_BASE}/group/create-group`, {
         method: "POST", headers,
         body: JSON.stringify({
           ...createGroupForm,

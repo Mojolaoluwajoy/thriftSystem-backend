@@ -39,8 +39,8 @@ A production-grade REST API for managing thrift cooperative groups built with Ja
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/thrift-system.git
-cd thrift-system
+git clone https://github.com/Mojolaoluwajoy/thriftSystem-backend.git
+cd thriftSystem-backend
 ```
 
 ### 2. Configure environment variables
