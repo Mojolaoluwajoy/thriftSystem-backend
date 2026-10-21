@@ -19,7 +19,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collation = "thrift_groups")
+@Document(collection = "thrift_groups")
 public class ThriftGroup {
 
     @Id private String id;
