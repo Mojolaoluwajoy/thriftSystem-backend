@@ -1,6 +1,9 @@
 package com.thrift.thriftsystem.model;
 
 import com.thrift.thriftsystem.enums.Role;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,12 +11,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 @Data
 @Builder
@@ -22,8 +20,7 @@ import java.util.Set;
 @Document(collection = "users")
 public class User {
 
-    @Id
-    private String id;
+    @Id private String id;
 
     private String email;
     private String phoneNumber;
@@ -38,23 +35,16 @@ public class User {
     private String bankAccountName;
     private String paystackRecipientCode;
 
-    @Builder.Default
-    private Set<Role> roles=new HashSet<>();
+    @Builder.Default private Set<Role> roles = new HashSet<>();
 
-    @Builder.Default
-    private boolean enabled=true;
+    @Builder.Default private boolean enabled = true;
 
-    @Builder.Default
-    private boolean emailVerified=false;
+    @Builder.Default private boolean emailVerified = false;
 
     private String resetPasswordToken;
     private LocalDateTime resetPasswordExpiry;
 
-    @CreatedDate
-    private LocalDateTime createdAt;
+    @CreatedDate private LocalDateTime createdAt;
 
-    @LastModifiedDate
-    private LocalDateTime updatedAt;
-
-
+    @LastModifiedDate private LocalDateTime updatedAt;
 }

@@ -15,5 +15,4 @@ public class ContributionRequest {
 
     @NotBlank(message = "Currency is required")
     private String currency;
-
 }

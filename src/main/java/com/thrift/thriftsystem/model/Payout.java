@@ -1,6 +1,8 @@
 package com.thrift.thriftsystem.model;
 
 import com.thrift.thriftsystem.enums.PayoutStatus;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,9 +11,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -19,8 +18,7 @@ import java.time.LocalDateTime;
 @Document(collection = "payouts")
 public class Payout {
 
-    @Id
-    private String id;
+    @Id private String id;
 
     private String userId;
     private String groupId;
@@ -35,19 +33,13 @@ public class Payout {
     private String transferReference;
     private String failureReason;
 
-    @Builder.Default
-    private PayoutStatus status=PayoutStatus.PENDING;
+    @Builder.Default private PayoutStatus status = PayoutStatus.PENDING;
 
     private Integer cycleNumber;
     private LocalDateTime scheduledDate;
     private LocalDateTime processedAt;
 
-    @CreatedDate
-    private LocalDateTime createdDate;
+    @CreatedDate private LocalDateTime createdDate;
 
-    @CreatedDate
-    private LocalDateTime updatedDate;
-
-
+    @CreatedDate private LocalDateTime updatedDate;
 }
-

@@ -5,14 +5,13 @@ import com.thrift.thriftsystem.dto.response.AuthResponse;
 import com.thrift.thriftsystem.dto.response.UserResponse;
 import com.thrift.thriftsystem.enums.Role;
 import com.thrift.thriftsystem.model.User;
-import org.springframework.stereotype.Component;
-
 import java.util.Set;
+import org.springframework.stereotype.Component;
 
 @Component
 public class UserMapper {
 
-    public User toModel(RegisterRequest request,String encodedPassword) {
+    public User toModel(RegisterRequest request, String encodedPassword) {
         return User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -41,7 +40,8 @@ public class UserMapper {
                 .createdAt(user.getCreatedAt())
                 .build();
     }
-    public AuthResponse toAuthResponse(User user,String token) {
+
+    public AuthResponse toAuthResponse(User user, String token) {
         return AuthResponse.builder()
                 .token(token)
                 .type("Bearer")
@@ -50,6 +50,5 @@ public class UserMapper {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .build();
-
     }
 }

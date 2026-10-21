@@ -1,5 +1,6 @@
 package com.thrift.thriftsystem.security;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,42 +21,40 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 @RequiredArgsConstructor
-
 public class SecurityConfig {
     private final JwtAuthFiller jwtAuthFiller;
-    private final  UserDetailsServiceImpl userDetailsServiceImpl;
+    private final UserDetailsServiceImpl userDetailsServiceImpl;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
-
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/v1/auth/**",
-                                "/api/v1/public/**",
-                                "/api/v1/webhook/**",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**"
-                        ).permitAll()
-                        .requestMatchers("/api/v1/admin/**").hasRole("SUPER_ADMIN")
-                        .anyRequest().authenticated())
-                .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                .authorizeHttpRequests(
+                        auth ->
+                                auth.requestMatchers(
+                                                "/api/v1/auth/**",
+                                                "/api/v1/public/**",
+                                                "/api/v1/webhook/**",
+                                                "/swagger-ui/**",
+                                                "/v3/api-docs/**")
+                                        .permitAll()
+                                        .requestMatchers("/api/v1/admin/**")
+                                        .hasRole("SUPER_ADMIN")
+                                        .anyRequest()
+                                        .authenticated())
+                .sessionManagement(
+                        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFiller, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
     @Bean
     public AuthenticationProvider authenticationProvider() {
 
@@ -64,12 +63,15 @@ public class SecurityConfig {
         daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
         return daoAuthenticationProvider;
     }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration)
+            throws Exception {
         return configuration.getAuthenticationManager();
     }
 
@@ -77,11 +79,14 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:3000"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(
+                List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
-        return new UrlBasedCorsConfigurationSource() {{
-            registerCorsConfiguration("/**", configuration);
-        }};
+        return new UrlBasedCorsConfigurationSource() {
+            {
+                registerCorsConfiguration("/**", configuration);
+            }
+        };
     }
 }

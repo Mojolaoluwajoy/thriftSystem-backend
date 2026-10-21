@@ -2,13 +2,12 @@ package com.thrift.thriftsystem.service;
 
 import com.thrift.thriftsystem.exception.BadRequestException;
 import com.thrift.thriftsystem.integration.PaystackClient;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -17,8 +16,8 @@ public class PaystackService {
 
     private final PaystackClient paystackClient;
 
-    public Map<String, Object> initializePayment(String email,
-                                                 BigDecimal amount, String reference) {
+    public Map<String, Object> initializePayment(
+            String email, BigDecimal amount, String reference) {
         try {
             Map<String, Object> request = new HashMap<>();
             request.put("email", email);
@@ -27,8 +26,7 @@ public class PaystackService {
             request.put("reference", reference);
             request.put("currency", "NGN");
 
-            Map<String, Object> response =
-                    paystackClient.initializeTransaction(request);
+            Map<String, Object> response = paystackClient.initializeTransaction(request);
 
             log.info("Payment initialized for: {}", email);
             return response;
@@ -40,11 +38,9 @@ public class PaystackService {
 
     public boolean verifyPayment(String reference) {
         try {
-            Map<String, Object> response =
-                    paystackClient.verifyTransaction(reference);
+            Map<String, Object> response = paystackClient.verifyTransaction(reference);
 
-            Map<String, Object> data =
-                    (Map<String, Object>) response.get("data");
+            Map<String, Object> data = (Map<String, Object>) response.get("data");
 
             if (data != null) {
                 String status = (String) data.get("status");
@@ -57,8 +53,8 @@ public class PaystackService {
         }
     }
 
-    public Map<String, Object> createTransferRecipient(String name,
-                                                       String accountNumber, String bankCode) {
+    public Map<String, Object> createTransferRecipient(
+            String name, String accountNumber, String bankCode) {
         try {
             Map<String, Object> request = new HashMap<>();
             request.put("type", "nuban");
@@ -67,8 +63,7 @@ public class PaystackService {
             request.put("bank_code", bankCode);
             request.put("currency", "NGN");
 
-            Map<String, Object> response =
-                    paystackClient.createTransferRecipient(request);
+            Map<String, Object> response = paystackClient.createTransferRecipient(request);
 
             log.info("Transfer recipient created for: {}", name);
             return response;
@@ -78,8 +73,8 @@ public class PaystackService {
         }
     }
 
-    public Map<String, Object> initiateTransfer(String recipientCode,
-                                                BigDecimal amount, String reason, String reference) {
+    public Map<String, Object> initiateTransfer(
+            String recipientCode, BigDecimal amount, String reason, String reference) {
         try {
             Map<String, Object> request = new HashMap<>();
             request.put("source", "balance");
@@ -89,8 +84,7 @@ public class PaystackService {
             // Paystack rejects a reused reference, so retries can't pay twice
             request.put("reference", reference);
 
-            Map<String, Object> response =
-                    paystackClient.initiateTransfer(request);
+            Map<String, Object> response = paystackClient.initiateTransfer(request);
 
             log.info("Transfer initiated: {}", reason);
             return response;

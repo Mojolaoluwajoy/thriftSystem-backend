@@ -1,5 +1,9 @@
 package com.thrift.thriftsystem.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import com.thrift.thriftsystem.dto.response.PayoutResponse;
 import com.thrift.thriftsystem.enums.ContributionStatus;
 import com.thrift.thriftsystem.enums.PayoutStatus;
@@ -16,6 +20,10 @@ import com.thrift.thriftsystem.repository.PayoutRepository;
 import com.thrift.thriftsystem.repository.ThriftGroupRepository;
 import com.thrift.thriftsystem.repository.UserRepository;
 import com.thrift.thriftsystem.util.PayoutMapper;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,47 +31,28 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class PayoutServiceTest {
 
-    @Mock
-    private PayoutRepository payoutRepository;
+    @Mock private PayoutRepository payoutRepository;
 
-    @Mock
-    private MembershipRepository membershipRepository;
+    @Mock private MembershipRepository membershipRepository;
 
-    @Mock
-    private ThriftGroupRepository thriftGroupRepository;
+    @Mock private ThriftGroupRepository thriftGroupRepository;
 
-    @Mock
-    private UserService userService;
+    @Mock private UserService userService;
 
-    @Mock
-    private PayoutMapper payoutMapper;
+    @Mock private PayoutMapper payoutMapper;
 
-    @Mock
-    private EmailService emailService;
+    @Mock private EmailService emailService;
 
-    @Mock
-    private ContributionRepository contributionRepository;
+    @Mock private ContributionRepository contributionRepository;
 
-    @Mock
-    private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
 
-    @Mock
-    private PaystackService paystackService;
+    @Mock private PaystackService paystackService;
 
-    @InjectMocks
-    private PayoutService payoutService;
+    @InjectMocks private PayoutService payoutService;
 
     private User currentUser;
     private ThriftGroup group;
@@ -73,53 +62,56 @@ class PayoutServiceTest {
 
     @BeforeEach
     void setUp() {
-        currentUser = User.builder()
-                .id("user123")
-                .email("john@example.com")
-                .paystackRecipientCode("RCP_123")
-                .build();
+        currentUser =
+                User.builder()
+                        .id("user123")
+                        .email("john@example.com")
+                        .paystackRecipientCode("RCP_123")
+                        .build();
 
-        group = ThriftGroup.builder()
-                .id("group123")
-                .name("Office Ajo")
-                .adminId("user123")
-                .contributionAmount(new BigDecimal("10000"))
-                .currency("NGN")
-                .build();
+        group =
+                ThriftGroup.builder()
+                        .id("group123")
+                        .name("Office Ajo")
+                        .adminId("user123")
+                        .contributionAmount(new BigDecimal("10000"))
+                        .currency("NGN")
+                        .build();
 
-        membership = Membership.builder()
-                .id("membership123")
-                .userId("user123")
-                .groupId("group123")
-                .build();
+        membership =
+                Membership.builder()
+                        .id("membership123")
+                        .userId("user123")
+                        .groupId("group123")
+                        .build();
 
-        payout = Payout.builder()
-                .id("payout123")
-                .userId("user123")
-                .groupId("group123")
-                .membershipId("membership123")
-                .amount(new BigDecimal("30000"))
-                .currency("NGN")
-                .status(PayoutStatus.PENDING)
-                .cycleNumber(1)
-                .build();
+        payout =
+                Payout.builder()
+                        .id("payout123")
+                        .userId("user123")
+                        .groupId("group123")
+                        .membershipId("membership123")
+                        .amount(new BigDecimal("30000"))
+                        .currency("NGN")
+                        .status(PayoutStatus.PENDING)
+                        .cycleNumber(1)
+                        .build();
 
-        payoutResponse = PayoutResponse.builder()
-                .id("payout123")
-                .userId("user123")
-                .groupId("group123")
-                .payoutStatus(PayoutStatus.PENDING)
-                .build();
+        payoutResponse =
+                PayoutResponse.builder()
+                        .id("payout123")
+                        .userId("user123")
+                        .groupId("group123")
+                        .payoutStatus(PayoutStatus.PENDING)
+                        .build();
     }
 
     @Test
     void schedulePayout_Success() {
-        when(thriftGroupRepository.findById("group123"))
-                .thenReturn(Optional.of(group));
+        when(thriftGroupRepository.findById("group123")).thenReturn(Optional.of(group));
         when(membershipRepository.findByUserIdAndGroupId(any(), any()))
                 .thenReturn(Optional.of(membership));
-        when(payoutRepository
-                .existsByUserIdAndGroupIdAndCycleNumber(any(), any(), anyInt()))
+        when(payoutRepository.existsByUserIdAndGroupIdAndCycleNumber(any(), any(), anyInt()))
                 .thenReturn(false);
         when(membershipRepository.countByGroupId("group123")).thenReturn(3L);
         when(payoutMapper.toModel(any(), any(), any(), any(), any(), anyInt(), any()))
@@ -127,27 +119,32 @@ class PayoutServiceTest {
         when(payoutRepository.save(any())).thenReturn(payout);
         when(payoutMapper.toResponse(any())).thenReturn(payoutResponse);
 
-        PayoutResponse result = payoutService
-                .schedulePayout("group123", "user123", 1);
+        PayoutResponse result = payoutService.schedulePayout("group123", "user123", 1);
 
         assertNotNull(result);
         assertEquals("payout123", result.getId());
-        verify(payoutMapper).toModel(eq("user123"), eq("group123"), eq("membership123"),
-                eq(new BigDecimal("30000")), eq("NGN"), eq(1), any());
+        verify(payoutMapper)
+                .toModel(
+                        eq("user123"),
+                        eq("group123"),
+                        eq("membership123"),
+                        eq(new BigDecimal("30000")),
+                        eq("NGN"),
+                        eq(1),
+                        any());
         verify(payoutRepository, times(1)).save(any());
     }
 
     @Test
     void schedulePayout_AlreadyScheduled_ThrowsException() {
-        when(thriftGroupRepository.findById(any()))
-                .thenReturn(Optional.of(group));
+        when(thriftGroupRepository.findById(any())).thenReturn(Optional.of(group));
         when(membershipRepository.findByUserIdAndGroupId(any(), any()))
                 .thenReturn(Optional.of(membership));
-        when(payoutRepository
-                .existsByUserIdAndGroupIdAndCycleNumber(any(), any(), anyInt()))
+        when(payoutRepository.existsByUserIdAndGroupIdAndCycleNumber(any(), any(), anyInt()))
                 .thenReturn(true);
 
-        assertThrows(BadRequestException.class,
+        assertThrows(
+                BadRequestException.class,
                 () -> payoutService.schedulePayout("group123", "user123", 1));
 
         verify(payoutRepository, never()).save(any());
@@ -159,7 +156,8 @@ class PayoutServiceTest {
         when(userService.getCurrentUser()).thenReturn(currentUser);
         when(membershipRepository.countByGroupId("group123")).thenReturn(3L);
         when(contributionRepository.countByGroupIdAndCycleNumberAndStatus(
-                "group123", 1, ContributionStatus.SUCCESSFUL)).thenReturn(3L);
+                        "group123", 1, ContributionStatus.SUCCESSFUL))
+                .thenReturn(3L);
     }
 
     @Test
@@ -167,15 +165,23 @@ class PayoutServiceTest {
         stubPayableCycle();
         when(userRepository.findById("user123")).thenReturn(Optional.of(currentUser));
         when(paystackService.initiateTransfer(any(), any(), any(), any()))
-                .thenReturn(Map.of("status", true,
-                        "data", Map.of("transfer_code", "TRF_123", "status", "pending")));
+                .thenReturn(
+                        Map.of(
+                                "status",
+                                true,
+                                "data",
+                                Map.of("transfer_code", "TRF_123", "status", "pending")));
         when(payoutMapper.toResponse(any())).thenReturn(payoutResponse);
 
         PayoutResponse result = payoutService.processPayout("payout123");
 
         assertNotNull(result);
-        verify(paystackService).initiateTransfer("RCP_123", new BigDecimal("30000"),
-                "Office Ajo payout - cycle 1", "payout-payout123");
+        verify(paystackService)
+                .initiateTransfer(
+                        "RCP_123",
+                        new BigDecimal("30000"),
+                        "Office Ajo payout - cycle 1",
+                        "payout-payout123");
         assertEquals(PayoutStatus.PROCESSING, payout.getStatus());
         assertEquals("TRF_123", payout.getPayStackTransferCode());
     }
@@ -184,10 +190,10 @@ class PayoutServiceTest {
     void processPayout_NotAllMembersPaid_ThrowsException() {
         stubPayableCycle();
         when(contributionRepository.countByGroupIdAndCycleNumberAndStatus(
-                "group123", 1, ContributionStatus.SUCCESSFUL)).thenReturn(2L);
+                        "group123", 1, ContributionStatus.SUCCESSFUL))
+                .thenReturn(2L);
 
-        assertThrows(BadRequestException.class,
-                () -> payoutService.processPayout("payout123"));
+        assertThrows(BadRequestException.class, () -> payoutService.processPayout("payout123"));
         verify(paystackService, never()).initiateTransfer(any(), any(), any(), any());
     }
 
@@ -197,20 +203,19 @@ class PayoutServiceTest {
         User noBank = User.builder().id("user123").build();
         when(userRepository.findById("user123")).thenReturn(Optional.of(noBank));
 
-        assertThrows(BadRequestException.class,
-                () -> payoutService.processPayout("payout123"));
+        assertThrows(BadRequestException.class, () -> payoutService.processPayout("payout123"));
         verify(paystackService, never()).initiateTransfer(any(), any(), any(), any());
     }
 
     @Test
     void processPayout_NotGroupAdmin_ThrowsForbidden() {
-        User otherUser = User.builder().id("other").roles(java.util.Set.of(Role.ROLE_ADMIN)).build();
+        User otherUser =
+                User.builder().id("other").roles(java.util.Set.of(Role.ROLE_ADMIN)).build();
         when(payoutRepository.findById("payout123")).thenReturn(Optional.of(payout));
         when(thriftGroupRepository.findById("group123")).thenReturn(Optional.of(group));
         when(userService.getCurrentUser()).thenReturn(otherUser);
 
-        assertThrows(ForbiddenException.class,
-                () -> payoutService.processPayout("payout123"));
+        assertThrows(ForbiddenException.class, () -> payoutService.processPayout("payout123"));
         verify(paystackService, never()).initiateTransfer(any(), any(), any(), any());
     }
 
@@ -221,8 +226,7 @@ class PayoutServiceTest {
         when(paystackService.initiateTransfer(any(), any(), any(), any()))
                 .thenThrow(new BadRequestException("Transfer initiation failed"));
 
-        assertThrows(BadRequestException.class,
-                () -> payoutService.processPayout("payout123"));
+        assertThrows(BadRequestException.class, () -> payoutService.processPayout("payout123"));
         assertEquals(PayoutStatus.PENDING, payout.getStatus());
         assertEquals("payout-payout123", payout.getTransferReference());
     }
@@ -272,18 +276,15 @@ class PayoutServiceTest {
     @Test
     void processPayout_NotPending_ThrowsException() {
         payout.setStatus(PayoutStatus.SUCCESSFUL);
-        when(payoutRepository.findById(any()))
-                .thenReturn(Optional.of(payout));
+        when(payoutRepository.findById(any())).thenReturn(Optional.of(payout));
 
-        assertThrows(BadRequestException.class,
-                () -> payoutService.processPayout("payout123"));
+        assertThrows(BadRequestException.class, () -> payoutService.processPayout("payout123"));
     }
 
     @Test
     void getMyPayouts_Success() {
         when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(payoutRepository.findByUserId(any()))
-                .thenReturn(List.of(payout));
+        when(payoutRepository.findByUserId(any())).thenReturn(List.of(payout));
         when(payoutMapper.toResponse(any())).thenReturn(payoutResponse);
 
         List<PayoutResponse> result = payoutService.getMyPayouts();
@@ -294,12 +295,10 @@ class PayoutServiceTest {
 
     @Test
     void getGroupPayouts_Success() {
-        when(payoutRepository.findByGroupId("group123"))
-                .thenReturn(List.of(payout));
+        when(payoutRepository.findByGroupId("group123")).thenReturn(List.of(payout));
         when(payoutMapper.toResponse(any())).thenReturn(payoutResponse);
 
-        List<PayoutResponse> result = payoutService
-                .getGroupPayouts("group123");
+        List<PayoutResponse> result = payoutService.getGroupPayouts("group123");
 
         assertNotNull(result);
         assertEquals(1, result.size());

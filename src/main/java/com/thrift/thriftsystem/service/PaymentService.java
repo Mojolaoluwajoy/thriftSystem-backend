@@ -6,11 +6,10 @@ import com.thrift.thriftsystem.exception.ResourceNotFoundException;
 import com.thrift.thriftsystem.model.Contribution;
 import com.thrift.thriftsystem.model.User;
 import com.thrift.thriftsystem.repository.ContributionRepository;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -22,23 +21,20 @@ public class PaymentService {
     private final UserService userService;
     private final EmailService emailService;
 
-    public Map<String, Object> initializeContributionPayment(
-            String contributionId) {
+    public Map<String, Object> initializeContributionPayment(String contributionId) {
         User currentUser = userService.getCurrentUser();
 
-        Contribution contribution = contributionRepository
-                .findById(contributionId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Contribution not found"));
+        Contribution contribution =
+                contributionRepository
+                        .findById(contributionId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Contribution not found"));
 
         if (!contribution.getUserId().equals(currentUser.getId())) {
-            throw new BadRequestException(
-                    "You can only pay for your own contributions");
+            throw new BadRequestException("You can only pay for your own contributions");
         }
 
         if (contribution.getStatus() != ContributionStatus.PENDING) {
-            throw new BadRequestException(
-                    "Contribution is not in pending state");
+            throw new BadRequestException("Contribution is not in pending state");
         }
 
         String reference = paystackService.generateReference();
@@ -47,16 +43,18 @@ public class PaymentService {
         contributionRepository.save(contribution);
 
         return paystackService.initializePayment(
-                currentUser.getEmail(),
-                contribution.getAmount(),
-                reference);
+                currentUser.getEmail(), contribution.getAmount(), reference);
     }
 
     public void handlePaymentSuccess(String reference) {
-        Contribution contribution = contributionRepository
-                .findByPaystackReference(reference)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Contribution not found for reference: " + reference));
+        Contribution contribution =
+                contributionRepository
+                        .findByPaystackReference(reference)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Contribution not found for reference: "
+                                                        + reference));
 
         boolean verified = paystackService.verifyPayment(reference);
 

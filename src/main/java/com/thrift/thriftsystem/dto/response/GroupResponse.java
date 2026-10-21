@@ -2,14 +2,13 @@ package com.thrift.thriftsystem.dto.response;
 
 import com.thrift.thriftsystem.enums.ContributionFrequency;
 import com.thrift.thriftsystem.enums.GroupStatus;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @Builder
@@ -34,5 +33,4 @@ public class GroupResponse {
     private List<String> memberIds;
     private List<String> memberNames;
     private LocalDateTime createdAt;
-
 }

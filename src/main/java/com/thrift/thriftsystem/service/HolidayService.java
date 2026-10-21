@@ -1,13 +1,12 @@
 package com.thrift.thriftsystem.service;
 
 import com.thrift.thriftsystem.integration.HolidayClient;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -20,10 +19,8 @@ public class HolidayService {
     public boolean isPublicHoliday(LocalDate date) {
         try {
             List<Map<String, Object>> holidays =
-                    holidayClient.getPublicHolidays(
-                            date.getYear(), COUNTRY_CODE);
-            return holidays.stream()
-                    .anyMatch(h -> h.get("date").equals(date.toString()));
+                    holidayClient.getPublicHolidays(date.getYear(), COUNTRY_CODE);
+            return holidays.stream().anyMatch(h -> h.get("date").equals(date.toString()));
         } catch (Exception e) {
             log.error("Failed to check public holiday: {}", e.getMessage());
             return false;
@@ -44,8 +41,7 @@ public class HolidayService {
     public String getHolidayName(LocalDate date) {
         try {
             List<Map<String, Object>> holidays =
-                    holidayClient.getPublicHolidays(
-                            date.getYear(), COUNTRY_CODE);
+                    holidayClient.getPublicHolidays(date.getYear(), COUNTRY_CODE);
             return holidays.stream()
                     .filter(h -> h.get("date").equals(date.toString()))
                     .map(h -> (String) h.get("name"))
