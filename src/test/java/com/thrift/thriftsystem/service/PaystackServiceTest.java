@@ -123,7 +123,8 @@ class PaystackServiceTest {
         Map<String, Object> result = paystackService.initiateTransfer(
                 "RCP_123",
                 new BigDecimal("10000"),
-                "Thrift payout");
+                "Thrift payout",
+                "payout-123");
 
         assertNotNull(result);
         verify(paystackClient, times(1)).initiateTransfer(any());

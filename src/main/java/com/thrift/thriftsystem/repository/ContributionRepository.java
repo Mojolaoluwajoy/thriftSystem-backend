@@ -16,7 +16,9 @@ public interface ContributionRepository extends MongoRepository<Contribution,Str
     List<Contribution> findByUserIdAndGroupId(String userId, String groupId);
     List<Contribution> findByUserId(String userId);
     List<Contribution> findByGroupId(String groupId);
-    List<Contribution> findByGroupIdAndCycleNumber(String groupId,String cycleNumber);
+    List<Contribution> findByGroupIdAndCycleNumber(String groupId,Integer cycleNumber);
+    long countByGroupIdAndCycleNumberAndStatus(String groupId, Integer cycleNumber, ContributionStatus status);
+    List<Contribution> findByStatusAndDueDateBetween(ContributionStatus status, LocalDateTime from, LocalDateTime to);
     Optional<Contribution> findByPaystackReference(String paystackReference);
     List<Contribution> findByStatusAndDueDateBefore(ContributionStatus status, LocalDateTime dueDate);
     boolean existsByUserIdAndGroupIdAndCycleNumber(String userId,String groupId,int cycleNumber);

@@ -33,6 +33,8 @@ public class UserMapper {
                 .lastName(user.getLastName())
                 .profilePicture(user.getProfilePicture())
                 .whatsappNumber(user.getWhatsappNumber())
+                .bankAccountName(user.getBankAccountName())
+                .bankAccountLinked(user.getPaystackRecipientCode() != null)
                 .roles(user.getRoles())
                 .enabled(true)
                 .emailVerified(true)

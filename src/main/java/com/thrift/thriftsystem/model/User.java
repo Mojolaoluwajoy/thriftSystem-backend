@@ -33,6 +33,10 @@ public class User {
     private String lastName;
     private String password;
     private String profilePicture;
+    private String bankAccountNumber;
+    private String bankCode;
+    private String bankAccountName;
+    private String paystackRecipientCode;
 
     @Builder.Default
     private Set<Role> roles=new HashSet<>();

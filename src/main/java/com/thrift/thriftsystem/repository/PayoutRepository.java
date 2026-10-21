@@ -23,6 +23,7 @@ public interface PayoutRepository extends MongoRepository<Payout,String> {
     List<Payout> findByGroupIdAndStatus(String groupId, PayoutStatus status);
 
     List<Payout> findByStatus(PayoutStatus status);
+    Optional<Payout> findByTransferReference(String transferReference);
 
     boolean existsByUserIdAndGroupIdAndCycleNumber(String userId,String groupId,Integer cycleNumber);
 }

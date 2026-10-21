@@ -11,6 +11,7 @@ import com.thrift.thriftsystem.model.User;
 import com.thrift.thriftsystem.repository.ContributionRepository;
 import com.thrift.thriftsystem.repository.MembershipRepository;
 import com.thrift.thriftsystem.repository.ThriftGroupRepository;
+import com.thrift.thriftsystem.repository.UserRepository;
 import com.thrift.thriftsystem.util.ContributionMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,6 +49,9 @@ class ContributionServiceTest {
 
     @Mock
     private EmailService emailService;
+
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private ContributionService contributionService;
@@ -181,5 +186,32 @@ class ContributionServiceTest {
 
         assertNotNull(result);
         assertEquals(1, result.size());
+    }
+
+    @Test
+    void sendDueReminders_EmailsMembersWithContributionsDueSoon() {
+        contribution.setDueDate(LocalDateTime.of(2026, 10, 23, 9, 0));
+        when(contributionRepository.findByStatusAndDueDateBetween(
+                eq(ContributionStatus.PENDING), any(), any()))
+                .thenReturn(List.of(contribution));
+        when(userRepository.findById("user123")).thenReturn(Optional.of(currentUser));
+        when(thriftGroupRepository.findById("group123")).thenReturn(Optional.of(group));
+
+        int sent = contributionService.sendDueReminders();
+
+        assertEquals(1, sent);
+        verify(emailService).sendContributionReminder(currentUser, group, "23 Oct 2026");
+    }
+
+    @Test
+    void sendDueReminders_SkipsWhenUserMissing() {
+        contribution.setDueDate(LocalDateTime.now().plusHours(5));
+        when(contributionRepository.findByStatusAndDueDateBetween(any(), any(), any()))
+                .thenReturn(List.of(contribution));
+        when(userRepository.findById(any())).thenReturn(Optional.empty());
+        when(thriftGroupRepository.findById(any())).thenReturn(Optional.of(group));
+
+        assertEquals(0, contributionService.sendDueReminders());
+        verify(emailService, never()).sendContributionReminder(any(), any(), any());
     }
 }

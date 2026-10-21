@@ -3,6 +3,7 @@ package com.thrift.thriftsystem.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thrift.thriftsystem.service.PaymentService;
+import com.thrift.thriftsystem.service.PayoutService;
 import com.thrift.thriftsystem.service.WebhookService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import java.util.Map;
 public class WebhookController {
 
     private final PaymentService paymentService;
+    private final PayoutService payoutService;
     private final WebhookService webhookService;
     private final ObjectMapper objectMapper;
 
@@ -49,6 +51,11 @@ public class WebhookController {
                 String reference = (String) data.get("reference");
                 paymentService.handlePaymentSuccess(reference);
                 log.info("Webhook processed for reference: {}", reference);
+            } else if (event != null && event.startsWith("transfer.")) {
+                String reference = (String) data.get("reference");
+                payoutService.handleTransferEvent(event, reference,
+                        (String) data.get("reason"));
+                log.info("Transfer webhook processed for reference: {}", reference);
             }
 
             return new ResponseEntity<>("OK", HttpStatus.OK);

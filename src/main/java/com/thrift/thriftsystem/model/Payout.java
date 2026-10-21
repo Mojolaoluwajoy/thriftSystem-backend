@@ -31,7 +31,9 @@ public class Payout {
 
     private String payStackTransferCode;
     private String payStackTransferType;
-    private BigDecimal payStackRecipientCode;
+    private String payStackRecipientCode;
+    private String transferReference;
+    private String failureReason;
 
     @Builder.Default
     private PayoutStatus status=PayoutStatus.PENDING;

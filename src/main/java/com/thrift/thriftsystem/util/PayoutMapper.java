@@ -34,6 +34,7 @@ public class PayoutMapper {
                 .currency(payout.getCurrency())
                 .payStackTransferCode(payout.getPayStackTransferCode())
                 .payoutStatus(payout.getStatus())
+                .failureReason(payout.getFailureReason())
                 .cycleNumber(payout.getCycleNumber())
                 .scheduledDate(payout.getScheduledDate())
                 .processedAt(payout.getProcessedAt())

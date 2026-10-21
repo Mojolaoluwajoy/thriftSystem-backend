@@ -25,6 +25,7 @@ public class PayoutResponse {
     private String currency;
     private String payStackTransferCode;
     private PayoutStatus payoutStatus;
+    private String failureReason;
     private Integer cycleNumber;
     private LocalDateTime scheduledDate;
     private LocalDateTime processedAt;

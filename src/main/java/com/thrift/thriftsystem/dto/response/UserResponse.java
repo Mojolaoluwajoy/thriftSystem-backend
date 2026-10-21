@@ -22,6 +22,8 @@ public class UserResponse {
     private String lastName;
     private String profilePicture;
     private String whatsappNumber;
+    private String bankAccountName;
+    private boolean bankAccountLinked;
     private Role role;
     private Set<Role> roles;
     private boolean enabled;

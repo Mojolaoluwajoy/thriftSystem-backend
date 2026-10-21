@@ -23,8 +23,7 @@ public class PaystackService {
             Map<String, Object> request = new HashMap<>();
             request.put("email", email);
             // Paystack expects amount in kobo (multiply by 100)
-            request.put("amount", amount.multiply(BigDecimal.valueOf(100))
-                    .intValue());
+            request.put("amount", toKobo(amount));
             request.put("reference", reference);
             request.put("currency", "NGN");
 
@@ -80,14 +79,15 @@ public class PaystackService {
     }
 
     public Map<String, Object> initiateTransfer(String recipientCode,
-                                                BigDecimal amount, String reason) {
+                                                BigDecimal amount, String reason, String reference) {
         try {
             Map<String, Object> request = new HashMap<>();
             request.put("source", "balance");
-            request.put("amount", amount.multiply(BigDecimal.valueOf(100))
-                    .intValue());
+            request.put("amount", toKobo(amount));
             request.put("recipient", recipientCode);
             request.put("reason", reason);
+            // Paystack rejects a reused reference, so retries can't pay twice
+            request.put("reference", reference);
 
             Map<String, Object> response =
                     paystackClient.initiateTransfer(request);
@@ -98,6 +98,11 @@ public class PaystackService {
             log.error("Transfer initiation failed: {}", e.getMessage());
             throw new BadRequestException("Transfer initiation failed");
         }
+    }
+
+    // Paystack expects amounts in kobo; long avoids overflow on large pots
+    private long toKobo(BigDecimal amount) {
+        return amount.multiply(BigDecimal.valueOf(100)).longValueExact();
     }
 
     public String generateReference() {
