@@ -33,5 +33,5 @@ build/
 .vscode/
 .env
 
-thrift-frontend/node_modules/
-thrift-frontend/dist/
+thriftSystemFrontEnd/node_modules/
+thriftSystemFrontEnd/dist/
