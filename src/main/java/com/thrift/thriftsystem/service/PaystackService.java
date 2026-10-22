@@ -94,6 +94,19 @@ public class PaystackService {
         }
     }
 
+    public boolean refundPayment(String reference) {
+        try {
+            Map<String, Object> request = new HashMap<>();
+            request.put("transaction", reference);
+            Map<String, Object> response = paystackClient.createRefund(request);
+            log.info("Refund requested for: {}", reference);
+            return Boolean.TRUE.equals(response.get("status"));
+        } catch (Exception e) {
+            log.error("Refund failed for {}: {}", reference, e.getMessage());
+            return false;
+        }
+    }
+
     // Paystack expects amounts in kobo; long avoids overflow on large pots
     private long toKobo(BigDecimal amount) {
         return amount.multiply(BigDecimal.valueOf(100)).longValueExact();

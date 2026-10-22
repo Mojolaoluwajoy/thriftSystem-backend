@@ -47,6 +47,9 @@ public class PaymentService {
         }
 
         String reference = paystackService.generateReference();
+        if (contribution.getPaystackReference() != null) {
+            contribution.getPreviousPaystackReferences().add(contribution.getPaystackReference());
+        }
         contribution.setPaystackReference(reference);
         contribution.setStatus(ContributionStatus.PROCESSING);
         contributionRepository.save(contribution);
@@ -58,29 +61,56 @@ public class PaymentService {
     public void handlePaymentSuccess(String reference) {
         Contribution contribution =
                 contributionRepository
-                        .findByPaystackReference(reference)
+                        .findByAnyPaystackReference(reference)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotFoundException(
                                                 "Contribution not found for reference: "
                                                         + reference));
 
+        boolean isCurrentReference = reference.equals(contribution.getPaystackReference());
+        boolean alreadyPaid = contribution.getStatus() == ContributionStatus.SUCCESSFUL;
+
         // Paystack can deliver the same event more than once
-        if (contribution.getStatus() == ContributionStatus.SUCCESSFUL) {
+        if ((alreadyPaid && isCurrentReference)
+                || contribution.getRefundedPaystackReferences().contains(reference)) {
             log.info("Payment already recorded for reference: {}", reference);
             return;
         }
 
         boolean verified = paystackService.verifyPayment(reference);
 
-        if (verified) {
-            markPaid(contribution);
-            log.info("Payment successful for reference: {}", reference);
-        } else {
-            contribution.setStatus(ContributionStatus.FAILED);
-            contributionRepository.save(contribution);
+        if (!verified) {
+            // Only the live checkout decides the contribution's state; a stale one failing
+            // doesn't change anything
+            if (isCurrentReference && !alreadyPaid) {
+                contribution.setStatus(ContributionStatus.FAILED);
+                contributionRepository.save(contribution);
+            }
             log.error("Payment verification failed for reference: {}", reference);
+            return;
         }
+
+        if (alreadyPaid) {
+            // The member paid through two checkouts; give the extra payment back
+            if (paystackService.refundPayment(reference)) {
+                contribution.getRefundedPaystackReferences().add(reference);
+                contributionRepository.save(contribution);
+                log.warn("Duplicate payment {} refunded", reference);
+                return;
+            }
+            // Throwing makes Paystack redeliver the webhook, which retries the refund
+            throw new BadRequestException("Refund failed for duplicate payment " + reference);
+        }
+
+        if (!isCurrentReference) {
+            // An older checkout was paid; make it the contribution's reference of record
+            contribution.getPreviousPaystackReferences().remove(reference);
+            contribution.getPreviousPaystackReferences().add(contribution.getPaystackReference());
+            contribution.setPaystackReference(reference);
+        }
+        markPaid(contribution);
+        log.info("Payment successful for reference: {}", reference);
     }
 
     private void markPaid(Contribution contribution) {

@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
@@ -34,5 +35,5 @@ public class Membership {
 
     @CreatedDate private LocalDateTime createdDate;
 
-    @CreatedDate private LocalDateTime updatedDate;
+    @LastModifiedDate private LocalDateTime updatedDate;
 }
