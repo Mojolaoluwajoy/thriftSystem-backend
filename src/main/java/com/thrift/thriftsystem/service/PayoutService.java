@@ -52,8 +52,14 @@ public class PayoutService {
                         .findByUserIdAndGroupId(userId, groupId)
                         .orElseThrow(() -> new ResourceNotFoundException("membership not found"));
 
-        if (payoutRepository.existsByUserIdAndGroupIdAndCycleNumber(userId, groupId, cycleNumber)) {
-            throw new BadRequestException("Payout already scheduled for this cycle");
+        // Each member collects once, and each cycle pays out to one member. A failed or
+        // reversed payout is retried through processPayout rather than scheduled again
+        if (membership.isHasCollected()
+                || !payoutRepository.findByUserIdAndGroupId(userId, groupId).isEmpty()) {
+            throw new BadRequestException("Member already has a payout in this group");
+        }
+        if (payoutRepository.existsByGroupIdAndCycleNumber(groupId, cycleNumber)) {
+            throw new BadRequestException("A payout is already scheduled for this cycle");
         }
         // The recipient collects every member's contribution for the cycle
         long memberCount = membershipRepository.countByGroupId(groupId);
@@ -130,6 +136,14 @@ public class PayoutService {
                             + "/"
                             + memberCount
                             + ")");
+        }
+
+        Membership membership =
+                membershipRepository
+                        .findById(payout.getMembershipId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Membership not found"));
+        if (membership.isHasCollected()) {
+            throw new BadRequestException("Member has already collected their payout");
         }
 
         User recipient =
