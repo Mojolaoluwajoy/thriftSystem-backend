@@ -119,4 +119,71 @@ class PaymentServiceTest {
         verify(contributionRepository, times(1)).save(any());
         assertEquals(ContributionStatus.FAILED, contribution.getStatus());
     }
+
+    @Test
+    void initializeContributionPayment_AbandonedCheckout_StartsNewCheckout() {
+        contribution.setStatus(ContributionStatus.PROCESSING);
+        contribution.setPaystackReference("THRIFT-old");
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(contributionRepository.findById("contribution123"))
+                .thenReturn(Optional.of(contribution));
+        when(paystackService.verifyPayment("THRIFT-old")).thenReturn(false);
+        when(paystackService.generateReference()).thenReturn("THRIFT-new");
+        when(paystackService.initializePayment(any(), any(), any()))
+                .thenReturn(Map.of("status", true));
+
+        paymentService.initializeContributionPayment("contribution123");
+
+        assertEquals("THRIFT-new", contribution.getPaystackReference());
+        assertEquals(ContributionStatus.PROCESSING, contribution.getStatus());
+        verify(paystackService)
+                .initializePayment("john@example.com", new BigDecimal("10000"), "THRIFT-new");
+    }
+
+    @Test
+    void initializeContributionPayment_FailedPayment_CanRetry() {
+        contribution.setStatus(ContributionStatus.FAILED);
+        contribution.setPaystackReference("THRIFT-old");
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(contributionRepository.findById("contribution123"))
+                .thenReturn(Optional.of(contribution));
+        when(paystackService.verifyPayment("THRIFT-old")).thenReturn(false);
+        when(paystackService.generateReference()).thenReturn("THRIFT-new");
+        when(paystackService.initializePayment(any(), any(), any()))
+                .thenReturn(Map.of("status", true));
+
+        paymentService.initializeContributionPayment("contribution123");
+
+        verify(paystackService).initializePayment(any(), any(), eq("THRIFT-new"));
+    }
+
+    @Test
+    void initializeContributionPayment_PreviousCheckoutWasPaid_MarksPaidInsteadOfCharging() {
+        contribution.setStatus(ContributionStatus.PROCESSING);
+        contribution.setPaystackReference("THRIFT-old");
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        when(contributionRepository.findById("contribution123"))
+                .thenReturn(Optional.of(contribution));
+        when(paystackService.verifyPayment("THRIFT-old")).thenReturn(true);
+
+        assertThrows(
+                BadRequestException.class,
+                () -> paymentService.initializeContributionPayment("contribution123"));
+
+        assertEquals(ContributionStatus.SUCCESSFUL, contribution.getStatus());
+        assertNotNull(contribution.getPaidAt());
+        verify(paystackService, never()).initializePayment(any(), any(), any());
+    }
+
+    @Test
+    void handlePaymentSuccess_AlreadyRecorded_Ignored() {
+        contribution.setStatus(ContributionStatus.SUCCESSFUL);
+        when(contributionRepository.findByPaystackReference("THRIFT-123"))
+                .thenReturn(Optional.of(contribution));
+
+        paymentService.handlePaymentSuccess("THRIFT-123");
+
+        verify(paystackService, never()).verifyPayment(any());
+        verify(contributionRepository, never()).save(any());
+    }
 }

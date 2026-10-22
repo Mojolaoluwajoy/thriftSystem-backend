@@ -33,8 +33,17 @@ public class PaymentService {
             throw new BadRequestException("You can only pay for your own contributions");
         }
 
-        if (contribution.getStatus() != ContributionStatus.PENDING) {
-            throw new BadRequestException("Contribution is not in pending state");
+        if (contribution.getStatus() == ContributionStatus.SUCCESSFUL
+                || contribution.getStatus() == ContributionStatus.REFUNDED) {
+            throw new BadRequestException("Contribution has already been paid");
+        }
+
+        // A previous checkout may have been abandoned, or paid without the webhook arriving
+        // yet; check it with Paystack before starting a new one so the member isn't charged twice
+        if (contribution.getPaystackReference() != null
+                && paystackService.verifyPayment(contribution.getPaystackReference())) {
+            markPaid(contribution);
+            throw new BadRequestException("Contribution has already been paid");
         }
 
         String reference = paystackService.generateReference();
@@ -56,17 +65,27 @@ public class PaymentService {
                                                 "Contribution not found for reference: "
                                                         + reference));
 
+        // Paystack can deliver the same event more than once
+        if (contribution.getStatus() == ContributionStatus.SUCCESSFUL) {
+            log.info("Payment already recorded for reference: {}", reference);
+            return;
+        }
+
         boolean verified = paystackService.verifyPayment(reference);
 
         if (verified) {
-            contribution.setStatus(ContributionStatus.SUCCESSFUL);
-            contribution.setPaidAt(java.time.LocalDateTime.now());
-            contributionRepository.save(contribution);
+            markPaid(contribution);
             log.info("Payment successful for reference: {}", reference);
         } else {
             contribution.setStatus(ContributionStatus.FAILED);
             contributionRepository.save(contribution);
             log.error("Payment verification failed for reference: {}", reference);
         }
+    }
+
+    private void markPaid(Contribution contribution) {
+        contribution.setStatus(ContributionStatus.SUCCESSFUL);
+        contribution.setPaidAt(java.time.LocalDateTime.now());
+        contributionRepository.save(contribution);
     }
 }

@@ -100,6 +100,7 @@ public class PaystackService {
     }
 
     public String generateReference() {
-        return "THRIFT-" + System.currentTimeMillis();
+        // A timestamp alone can collide when two members pay in the same millisecond
+        return "THRIFT-" + java.util.UUID.randomUUID();
     }
 }
