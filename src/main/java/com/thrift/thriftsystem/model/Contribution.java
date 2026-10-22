@@ -3,6 +3,8 @@ package com.thrift.thriftsystem.model;
 import com.thrift.thriftsystem.enums.ContributionStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,9 +30,14 @@ public class Contribution {
     private BigDecimal amount;
     private String currency;
     private Integer cycleNumber;
-    // @CreatedDate
-    // private LocalDateTime createdDate;
-    @LastModifiedDate private String paystackReference;
+    private String paystackReference;
+
+    // References of earlier checkouts for this contribution; their links stay payable, so
+    // webhooks for them must still find this contribution
+    @Builder.Default private List<String> previousPaystackReferences = new ArrayList<>();
+
+    // Extra payments for an already-paid contribution, refunded through Paystack
+    @Builder.Default private List<String> refundedPaystackReferences = new ArrayList<>();
     private String paystackTransactionId;
 
     @Builder.Default private ContributionStatus status = ContributionStatus.PENDING;
@@ -39,5 +46,20 @@ public class Contribution {
     private LocalDateTime paidAt;
 
     @CreatedDate private LocalDateTime createdDate;
-    @CreatedDate private LocalDateTime updatedDate;
+    @LastModifiedDate private LocalDateTime updatedDate;
+
+    // Documents saved before these fields existed load them as null
+    public List<String> getPreviousPaystackReferences() {
+        if (previousPaystackReferences == null) {
+            previousPaystackReferences = new ArrayList<>();
+        }
+        return previousPaystackReferences;
+    }
+
+    public List<String> getRefundedPaystackReferences() {
+        if (refundedPaystackReferences == null) {
+            refundedPaystackReferences = new ArrayList<>();
+        }
+        return refundedPaystackReferences;
+    }
 }

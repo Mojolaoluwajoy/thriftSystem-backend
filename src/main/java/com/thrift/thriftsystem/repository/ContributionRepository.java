@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -26,6 +27,9 @@ public interface ContributionRepository extends MongoRepository<Contribution, St
             ContributionStatus status, LocalDateTime from, LocalDateTime to);
 
     Optional<Contribution> findByPaystackReference(String paystackReference);
+
+    @Query("{ '$or': [ { 'paystackReference': ?0 }, { 'previousPaystackReferences': ?0 } ] }")
+    Optional<Contribution> findByAnyPaystackReference(String reference);
 
     List<Contribution> findByStatusAndDueDateBefore(
             ContributionStatus status, LocalDateTime dueDate);

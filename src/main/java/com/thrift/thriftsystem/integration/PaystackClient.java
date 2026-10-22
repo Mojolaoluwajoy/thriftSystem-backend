@@ -20,6 +20,9 @@ public interface PaystackClient {
     @PostMapping("/transferrecipient")
     Map<String, Object> createTransferRecipient(@RequestBody Map<String, Object> request);
 
+    @PostMapping("/refund")
+    Map<String, Object> createRefund(@RequestBody Map<String, Object> request);
+
     @PostMapping("/transfer")
     Map<String, Object> initiateTransfer(@RequestBody Map<String, Object> request);
 }

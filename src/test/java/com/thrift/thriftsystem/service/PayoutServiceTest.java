@@ -111,8 +111,8 @@ class PayoutServiceTest {
         when(thriftGroupRepository.findById("group123")).thenReturn(Optional.of(group));
         when(membershipRepository.findByUserIdAndGroupId(any(), any()))
                 .thenReturn(Optional.of(membership));
-        when(payoutRepository.existsByUserIdAndGroupIdAndCycleNumber(any(), any(), anyInt()))
-                .thenReturn(false);
+        when(payoutRepository.findByUserIdAndGroupId("user123", "group123")).thenReturn(List.of());
+        when(payoutRepository.existsByGroupIdAndCycleNumber("group123", 1)).thenReturn(false);
         when(membershipRepository.countByGroupId("group123")).thenReturn(3L);
         when(payoutMapper.toModel(any(), any(), any(), any(), any(), anyInt(), any()))
                 .thenReturn(payout);
@@ -136,16 +136,45 @@ class PayoutServiceTest {
     }
 
     @Test
-    void schedulePayout_AlreadyScheduled_ThrowsException() {
+    void schedulePayout_CycleAlreadyHasPayout_ThrowsException() {
         when(thriftGroupRepository.findById(any())).thenReturn(Optional.of(group));
         when(membershipRepository.findByUserIdAndGroupId(any(), any()))
                 .thenReturn(Optional.of(membership));
-        when(payoutRepository.existsByUserIdAndGroupIdAndCycleNumber(any(), any(), anyInt()))
-                .thenReturn(true);
+        when(payoutRepository.findByUserIdAndGroupId(any(), any())).thenReturn(List.of());
+        when(payoutRepository.existsByGroupIdAndCycleNumber("group123", 1)).thenReturn(true);
 
         assertThrows(
                 BadRequestException.class,
                 () -> payoutService.schedulePayout("group123", "user123", 1));
+
+        verify(payoutRepository, never()).save(any());
+    }
+
+    @Test
+    void schedulePayout_MemberAlreadyHasPayout_ThrowsException() {
+        when(thriftGroupRepository.findById(any())).thenReturn(Optional.of(group));
+        when(membershipRepository.findByUserIdAndGroupId(any(), any()))
+                .thenReturn(Optional.of(membership));
+        when(payoutRepository.findByUserIdAndGroupId("user123", "group123"))
+                .thenReturn(List.of(payout));
+
+        assertThrows(
+                BadRequestException.class,
+                () -> payoutService.schedulePayout("group123", "user123", 2));
+
+        verify(payoutRepository, never()).save(any());
+    }
+
+    @Test
+    void schedulePayout_MemberAlreadyCollected_ThrowsException() {
+        membership.setHasCollected(true);
+        when(thriftGroupRepository.findById(any())).thenReturn(Optional.of(group));
+        when(membershipRepository.findByUserIdAndGroupId(any(), any()))
+                .thenReturn(Optional.of(membership));
+
+        assertThrows(
+                BadRequestException.class,
+                () -> payoutService.schedulePayout("group123", "user123", 2));
 
         verify(payoutRepository, never()).save(any());
     }
@@ -163,6 +192,7 @@ class PayoutServiceTest {
     @Test
     void processPayout_Success() {
         stubPayableCycle();
+        when(membershipRepository.findById("membership123")).thenReturn(Optional.of(membership));
         when(userRepository.findById("user123")).thenReturn(Optional.of(currentUser));
         when(paystackService.initiateTransfer(any(), any(), any(), any()))
                 .thenReturn(
@@ -200,8 +230,19 @@ class PayoutServiceTest {
     @Test
     void processPayout_NoBankAccount_ThrowsException() {
         stubPayableCycle();
+        when(membershipRepository.findById("membership123")).thenReturn(Optional.of(membership));
         User noBank = User.builder().id("user123").build();
         when(userRepository.findById("user123")).thenReturn(Optional.of(noBank));
+
+        assertThrows(BadRequestException.class, () -> payoutService.processPayout("payout123"));
+        verify(paystackService, never()).initiateTransfer(any(), any(), any(), any());
+    }
+
+    @Test
+    void processPayout_MemberAlreadyCollected_ThrowsException() {
+        stubPayableCycle();
+        membership.setHasCollected(true);
+        when(membershipRepository.findById("membership123")).thenReturn(Optional.of(membership));
 
         assertThrows(BadRequestException.class, () -> payoutService.processPayout("payout123"));
         verify(paystackService, never()).initiateTransfer(any(), any(), any(), any());
@@ -222,6 +263,7 @@ class PayoutServiceTest {
     @Test
     void processPayout_TransferRejected_RevertsToPending() {
         stubPayableCycle();
+        when(membershipRepository.findById("membership123")).thenReturn(Optional.of(membership));
         when(userRepository.findById("user123")).thenReturn(Optional.of(currentUser));
         when(paystackService.initiateTransfer(any(), any(), any(), any()))
                 .thenThrow(new BadRequestException("Transfer initiation failed"));
