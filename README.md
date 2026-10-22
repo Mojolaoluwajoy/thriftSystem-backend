@@ -140,6 +140,22 @@ http://localhost:8080/swagger-ui/index.html
 |---|---|---|---|
 | POST | `/api/v1/webhook/paystack` | Paystack webhook | Public |
 
+## Testing Paystack Webhooks Locally
+
+`scripts/send-webhook.sh` sends a Paystack-style webhook to the running app, signed with
+your `PAYSTACK_SECRET_KEY` (from the environment or `.env`), so you can test webhook
+handling without a tunnel.
+
+```bash
+scripts/send-webhook.sh transfer.success payout-<payoutId>
+scripts/send-webhook.sh transfer.failed payout-<payoutId> "Account closed"
+scripts/send-webhook.sh charge.success THRIFT-<reference>
+```
+
+Transfer events are handled entirely by the app. `charge.success` is re-verified with
+Paystack, so it only succeeds for a real test-mode payment. Set `WEBHOOK_URL` to target
+a different host.
+
 ## Running Tests
 ```bash
 mvn test
