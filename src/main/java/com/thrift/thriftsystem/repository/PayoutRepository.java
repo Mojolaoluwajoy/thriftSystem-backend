@@ -27,6 +27,8 @@ public interface PayoutRepository extends MongoRepository<Payout, String> {
 
     boolean existsByGroupIdAndCycleNumber(String groupId, Integer cycleNumber);
 
+    Optional<Payout> findByGroupIdAndCycleNumber(String groupId, Integer cycleNumber);
+
     boolean existsByUserIdAndGroupIdAndCycleNumber(
             String userId, String groupId, Integer cycleNumber);
 }

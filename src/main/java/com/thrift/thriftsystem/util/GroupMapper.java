@@ -25,8 +25,8 @@ public class GroupMapper {
                                 : LocalDateTime.now())
                 .totalMember(request.getTotalMembers())
                 .totalCycles(request.getTotalMembers())
-                .currentCycle(1)
-                .status(GroupStatus.ACTIVE)
+                .currentCycle(0)
+                .status(GroupStatus.FORMING)
                 .build();
     }
 
@@ -40,6 +40,7 @@ public class GroupMapper {
                 .currency(group.getCurrency())
                 .status(group.getStatus())
                 .totalMembers(group.getTotalMember())
+                .currentCycle(group.getCurrentCycle())
                 .totalCycles(group.getTotalCycles())
                 .startDate(group.getStartDate())
                 .endDate(group.getEndDate())

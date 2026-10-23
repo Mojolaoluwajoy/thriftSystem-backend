@@ -14,6 +14,8 @@ public interface MembershipRepository extends MongoRepository<Membership, String
 
     Optional<Membership> findByUserIdAndGroupId(String userId, String groupId);
 
+    Optional<Membership> findFirstByUserIdAndGroupIdIsNull(String userId);
+
     List<Membership> findByGroupIdAndStatus(String groupId, MembershipStatus status);
 
     boolean existsByUserIdAndGroupId(String userId, String groupId);

@@ -40,6 +40,9 @@ public class ThriftGroup {
     private LocalDateTime startDate;
     private LocalDateTime endDate;
 
+    // Set when the admin starts the group; membership is locked from then on
+    private LocalDateTime startedAt;
+
     private ContributionFrequency frequency;
 
     @Builder.Default private List<String> memberIds = new ArrayList<>();

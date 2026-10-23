@@ -52,6 +52,8 @@ class PayoutServiceTest {
 
     @Mock private PaystackService paystackService;
 
+    @Mock private CycleService cycleService;
+
     @InjectMocks private PayoutService payoutService;
 
     private User currentUser;
@@ -288,6 +290,7 @@ class PayoutServiceTest {
         assertNotNull(payout.getProcessedAt());
         assertTrue(membership.isHasCollected());
         verify(emailService).sendPayoutNotification(currentUser, group, "30000 NGN");
+        verify(cycleService).onPayoutSuccessful(payout);
     }
 
     @Test
@@ -344,5 +347,30 @@ class PayoutServiceTest {
 
         assertNotNull(result);
         assertEquals(1, result.size());
+    }
+
+    @Test
+    void handleTransferEvent_CycleAdvanceFails_PayoutStillRecorded() {
+        payout.setStatus(PayoutStatus.PROCESSING);
+        when(payoutRepository.findByTransferReference("payout-payout123"))
+                .thenReturn(Optional.of(payout));
+        doThrow(new RuntimeException("db down")).when(cycleService).onPayoutSuccessful(any());
+
+        assertDoesNotThrow(
+                () ->
+                        payoutService.handleTransferEvent(
+                                "transfer.success", "payout-payout123", null));
+        assertEquals(PayoutStatus.SUCCESSFUL, payout.getStatus());
+    }
+
+    @Test
+    void handleTransferEvent_Failed_DoesNotAdvanceCycle() {
+        payout.setStatus(PayoutStatus.PROCESSING);
+        when(payoutRepository.findByTransferReference("payout-payout123"))
+                .thenReturn(Optional.of(payout));
+
+        payoutService.handleTransferEvent("transfer.failed", "payout-payout123", "Account closed");
+
+        verify(cycleService, never()).onPayoutSuccessful(any());
     }
 }
