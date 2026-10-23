@@ -40,6 +40,7 @@ public class PayoutService {
     private final ContributionRepository contributionRepository;
     private final UserRepository userRepository;
     private final PaystackService paystackService;
+    private final CycleService cycleService;
 
     public PayoutResponse schedulePayout(String groupId, String userId, Integer cycleNumber) {
         ThriftGroup group =
@@ -240,6 +241,15 @@ public class PayoutService {
                             user, group, payout.getAmount() + " " + payout.getCurrency());
                 }
                 log.info("Payout successful: {}", payout.getId());
+                try {
+                    cycleService.onPayoutSuccessful(payout);
+                } catch (Exception e) {
+                    // The payout is recorded; the daily cycle job opens the next cycle
+                    log.error(
+                            "Failed to advance cycle after payout {}: {}",
+                            payout.getId(),
+                            e.getMessage());
+                }
             }
             case "transfer.failed", "transfer.reversed" -> {
                 payout.setStatus(

@@ -8,7 +8,7 @@ A production-grade REST API for managing thrift cooperative groups built with Ja
 - User authentication with JWT
 - Thrift group management
 - Contribution tracking
-- Automated payout scheduling
+- Automated contribution cycles and payout scheduling
 - Paystack payment integration
 - Real-time currency conversion
 - Nigerian public holiday awareness
@@ -103,11 +103,19 @@ http://localhost:8080/swagger-ui/index.html
 ### Thrift Groups
 | Method | Endpoint | Description | Auth |
 |---|---|---|---|
-| POST | `/api/v1/groups` | Create group | Required |
-| GET | `/api/v1/groups/my-groups` | Get my groups | Required |
-| GET | `/api/v1/groups/{groupId}` | Get group by ID | Required |
-| POST | `/api/v1/groups/{groupId}/members/{userId}` | Add member | Admin |
-| GET | `/api/v1/groups` | Get all groups | Super Admin |
+| POST | `/api/v1/group/create-group` | Create group (starts as `FORMING`) | Required |
+| GET | `/api/v1/group/my-groups` | Get my groups | Required |
+| GET | `/api/v1/group/{groupId}` | Get group by ID | Required |
+| POST | `/api/v1/group/{groupId}/members/{userId}` | Add member (before the group starts) | Group admin |
+| POST | `/api/v1/group/{groupId}/start` | Start the group and open cycle 1 | Group admin |
+| GET | `/api/v1/group` | Get all groups | Super Admin |
+
+**How cycles work:** starting a group (at least 2 members) locks membership and creates one
+cycle per member. Each cycle creates a contribution for every member and schedules the pot
+for the next member in payout order. Contributions are due one period (day, week, two
+weeks, month or two months) after the cycle opens, moved off weekends and Nigerian public
+holidays. When the cycle's payout succeeds the next cycle opens; after the last one the
+group is `COMPLETED`.
 
 ### Contributions
 | Method | Endpoint | Description | Auth |

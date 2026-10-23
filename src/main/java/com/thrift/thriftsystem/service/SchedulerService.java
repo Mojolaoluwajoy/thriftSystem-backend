@@ -18,12 +18,18 @@ public class SchedulerService {
     private final EmailService emailService;
     private final UserService userService;
     private final ContributionService contributionService;
+    private final CycleService cycleService;
 
     @Scheduled(cron = "0 0 0 * * *")
     public void updateExchangeRates() {
         log.info("Scheduled exchange rate update starting...");
         currencyService.updateExchangeRates();
         log.info("Scheduled exchange rate update completed.");
+    }
+
+    @Scheduled(cron = "0 30 0 * * *")
+    public void advanceStalledGroups() {
+        cycleService.advanceStalledGroups();
     }
 
     @Scheduled(cron = "0 0 9 * * *")
