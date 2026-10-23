@@ -24,7 +24,7 @@ public class UserController {
                 HttpStatus.OK);
     }
 
-    @GetMapping("/id")
+    @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getUserById(@PathVariable String id) {
         return new ResponseEntity<>(
                 ApiResponse.success("User retrieved", userService.getUserById(id)), HttpStatus.OK);

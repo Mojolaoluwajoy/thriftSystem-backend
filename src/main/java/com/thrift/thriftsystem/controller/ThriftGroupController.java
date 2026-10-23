@@ -34,8 +34,8 @@ public class ThriftGroupController {
     }
 
     @GetMapping("/{groupId}")
-    public ResponseEntity<ApiResponse> getGroupById(@PathVariable String id) {
-        GroupResponse response = thriftGroupService.getGroupById(id);
+    public ResponseEntity<ApiResponse> getGroupById(@PathVariable String groupId) {
+        GroupResponse response = thriftGroupService.getGroupById(groupId);
         return new ResponseEntity<>(
                 ApiResponse.success("Group with id found", response), HttpStatus.OK);
     }
@@ -46,6 +46,13 @@ public class ThriftGroupController {
         return new ResponseEntity<>(
                 ApiResponse.success(
                         "Member added successfully", thriftGroupService.addMember(groupId, userId)),
+                HttpStatus.OK);
+    }
+
+    @PostMapping("/{groupId}/start")
+    public ResponseEntity<ApiResponse> startGroup(@PathVariable String groupId) {
+        return new ResponseEntity<>(
+                ApiResponse.success("Group started", thriftGroupService.startGroup(groupId)),
                 HttpStatus.OK);
     }
 
