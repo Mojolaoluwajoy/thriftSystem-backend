@@ -1,14 +1,17 @@
 import { useState, useEffect } from "react";
+import { api } from "../api";
+import { colors, statusColor, StatusPill, primaryButton, errorText } from "../ui.jsx";
+import GroupDetails from "./GroupDetails";
+import BankAccount from "./BankAccount";
 
-const API_BASE = "http://localhost:8080/api/v1";
-
-const colors = {
-  orange: "linear-gradient(135deg, #ff6400, #ff9500)",
-  green: "linear-gradient(135deg, #00c896, #00e6a8)",
-  purple: "linear-gradient(135deg, #7c3aed, #a855f7)",
-  blue: "linear-gradient(135deg, #0ea5e9, #38bdf8)",
-  pink: "linear-gradient(135deg, #ec4899, #f472b6)",
-};
+// Values must match the backend's ContributionFrequency enum
+const frequencies = [
+  { value: "DAILY", label: "Daily" },
+  { value: "WEEKLY", label: "Weekly" },
+  { value: "BI_WEEKLY", label: "Every 2 weeks" },
+  { value: "MONTHLY", label: "Monthly" },
+  { value: "BI_MONTHLY", label: "Every 2 months" },
+];
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: "🏠" },
@@ -21,6 +24,13 @@ const navItems = [
 
 export default function Dashboard({ user, token, onLogout }) {
   const [activeNav, setActiveNav] = useState("dashboard");
+  const [selectedGroupId, setSelectedGroupId] = useState(null);
+  const [payingId, setPayingId] = useState(null);
+  const [error, setError] = useState("");
+  // Set when Paystack sends the member back after checkout
+  const [paymentNotice, setPaymentNotice] = useState(
+    () => new URLSearchParams(window.location.search).get("payment") === "complete"
+  );
   const [groups, setGroups] = useState([]);
   const [contributions, setContributions] = useState([]);
   const [payouts, setPayouts] = useState([]);
@@ -34,11 +44,6 @@ export default function Dashboard({ user, token, onLogout }) {
     startDate: "", totalMembers: ""
   });
 
-  const headers = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`
-  };
-
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour < 12) setGreeting("Good morning");
@@ -47,87 +52,81 @@ export default function Dashboard({ user, token, onLogout }) {
   }, []);
 
   useEffect(() => {
-    fetchGroups();
-    fetchContributions();
-    fetchPayouts();
+    if (paymentNotice) {
+      // Drop Paystack's query parameters so a refresh doesn't show the notice again
+      window.history.replaceState({}, "", window.location.pathname);
+      setActiveNav("contributions");
+    }
+    refreshAll();
     fetchCurrencies();
   }, []);
 
-  const fetchGroups = async () => {
+  const load = async (path, setter) => {
     try {
-      const res = await fetch(`${API_BASE}/group/my-groups`, { headers });
-      const data = await res.json();
-      if (data.success) setGroups(data.data || []);
-    } catch {}
+      setter((await api(path, { token })) || []);
+    } catch (e) {
+      setError(e.message);
+    }
   };
 
-  const fetchContributions = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/contributions/my-contributions`, { headers });
-      const data = await res.json();
-      if (data.success) setContributions(data.data || []);
-    } catch {}
-  };
-
-  const fetchPayouts = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/payouts/my-payouts`, { headers });
-      const data = await res.json();
-      if (data.success) setPayouts(data.data || []);
-    } catch {}
-  };
-
-  const fetchCurrencies = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/currencies`, { headers });
-      const data = await res.json();
-      if (data.success) setCurrencies(data.data || []);
-    } catch {}
-  };
+  const fetchGroups = () => load("/group/my-groups", setGroups);
+  const fetchContributions = () => load("/contributions/my-contributions", setContributions);
+  const fetchPayouts = () => load("/payouts/my-payouts", setPayouts);
+  const fetchCurrencies = () => load("/currencies", setCurrencies);
+  const refreshAll = () => Promise.all([fetchGroups(), fetchContributions(), fetchPayouts()]);
 
   const handleCreateGroup = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
     try {
-      const res = await fetch(`${API_BASE}/group/create-group`, {
-        method: "POST", headers,
-        body: JSON.stringify({
+      await api("/group/create-group", {
+        token, method: "POST",
+        body: {
           ...createGroupForm,
           contributionAmount: parseFloat(createGroupForm.contributionAmount),
           totalMembers: parseInt(createGroupForm.totalMembers),
           startDate: new Date(createGroupForm.startDate).toISOString()
-        })
+        }
       });
-      const data = await res.json();
-      if (data.success) {
-        setShowCreateGroup(false);
-        fetchGroups();
-        setCreateGroupForm({
-          name: "", description: "", contributionAmount: "",
-          currency: "NGN", frequency: "MONTHLY",
-          startDate: "", totalMembers: ""
-        });
-      }
-    } catch {}
+      setShowCreateGroup(false);
+      fetchGroups();
+      setCreateGroupForm({
+        name: "", description: "", contributionAmount: "",
+        currency: "NGN", frequency: "MONTHLY",
+        startDate: "", totalMembers: ""
+      });
+    } catch (err) {
+      setError(err.message);
+    }
     setLoading(false);
   };
 
-  const statusColor = (status) => {
-    const map = {
-      ACTIVE: "#00c896", COMPLETED: "#0ea5e9",
-      PENDING: "#ff9500", SUCCESSFUL: "#00c896",
-      FAILED: "#ef4444", PROCESSING: "#a855f7",
-      SUSPENDED: "#ef4444", INACTIVE: "#888"
-    };
-    return map[status] || "#888";
+  // Opens Paystack checkout for a contribution; Paystack returns to /?payment=complete
+  const payContribution = async (contribution) => {
+    setPayingId(contribution.id);
+    setError("");
+    try {
+      const paystack = await api(`/payments/initialize/${contribution.id}`, { token, method: "POST" });
+      const url = paystack?.data?.authorization_url;
+      if (!url) throw new Error("Paystack didn't return a checkout link");
+      window.location.href = url;
+    } catch (err) {
+      setError(err.message);
+      setPayingId(null);
+      fetchContributions();
+    }
   };
+
+  const groupName = (groupId) => groups.find(g => g.id === groupId)?.name;
+  const selectedGroup = groups.find(g => g.id === selectedGroupId);
 
   const totalContributed = contributions
     .filter(c => c.status === "SUCCESSFUL")
     .reduce((sum, c) => sum + (c.amount || 0), 0);
 
   const totalPayouts = payouts
-    .filter(p => p.status === "SUCCESSFUL")
+    .filter(p => p.payoutStatus === "SUCCESSFUL")
     .reduce((sum, p) => sum + (p.amount || 0), 0);
 
   return (
@@ -164,7 +163,7 @@ export default function Dashboard({ user, token, onLogout }) {
         {/* Nav */}
         <nav style={{ flex: 1 }}>
           {navItems.map(item => (
-            <button key={item.id} onClick={() => setActiveNav(item.id)}
+            <button key={item.id} onClick={() => { setActiveNav(item.id); setSelectedGroupId(null); setError(""); }}
               style={{
                 width: "100%", display: "flex", alignItems: "center",
                 gap: "0.75rem", padding: "0.75rem 1rem",
@@ -231,7 +230,26 @@ export default function Dashboard({ user, token, onLogout }) {
       </div>
 
       {/* Main content */}
-      <div style={{ flex: 1, padding: "2rem", overflowY: "auto" }}>
+      <div style={{ flex: 1, padding: "2rem", overflowY: "auto", minWidth: 0 }}>
+
+        {paymentNotice && (
+          <div style={{
+            background: "rgba(0,200,150,0.1)", border: "1px solid rgba(0,200,150,0.3)",
+            borderRadius: "12px", padding: "0.75rem 1rem", marginBottom: "1rem",
+            display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem"
+          }}>
+            <span style={{ color: "#00c896", fontSize: "0.9rem" }}>
+              Payment submitted. It shows as paid once Paystack confirms it, usually within a minute.
+            </span>
+            <button onClick={() => { setPaymentNotice(false); refreshAll(); }} style={{
+              background: "transparent", border: "none", color: "#00c896", cursor: "pointer", fontSize: "0.85rem"
+            }}>Refresh</button>
+          </div>
+        )}
+
+        {error && (
+          <p style={{ ...errorText, margin: "0 0 1rem" }}>{error}</p>
+        )}
 
         {/* Dashboard */}
         {activeNav === "dashboard" && (
@@ -375,7 +393,15 @@ export default function Dashboard({ user, token, onLogout }) {
         )}
 
         {/* Groups */}
-        {activeNav === "groups" && (
+        {activeNav === "groups" && selectedGroup && (
+          <GroupDetails
+            group={selectedGroup} user={user} token={token}
+            onBack={() => setSelectedGroupId(null)}
+            onChanged={refreshAll}
+          />
+        )}
+
+        {activeNav === "groups" && !selectedGroup && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
               <h2 style={{
@@ -440,8 +466,8 @@ export default function Dashboard({ user, token, onLogout }) {
                           fontFamily: "'DM Sans', sans-serif", fontSize: "0.9rem",
                           outline: "none", boxSizing: "border-box"
                         }}>
-                        {["DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY", "BIMONTHLY"].map(f => (
-                          <option key={f} value={f} style={{ background: "#1a1a1a" }}>{f}</option>
+                        {frequencies.map(f => (
+                          <option key={f.value} value={f.value} style={{ background: "#1a1a1a" }}>{f.label}</option>
                         ))}
                       </select>
                     </div>
@@ -488,11 +514,11 @@ export default function Dashboard({ user, token, onLogout }) {
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1rem" }}>
               {groups.map((group, i) => (
-                <div key={group.id} style={{
+                <div key={group.id} onClick={() => setSelectedGroupId(group.id)} style={{
                   background: "rgba(255,255,255,0.04)",
                   border: "1px solid rgba(255,255,255,0.08)",
                   borderRadius: "16px", padding: "1.25rem",
-                  position: "relative", overflow: "hidden"
+                  position: "relative", overflow: "hidden", cursor: "pointer"
                 }}>
                   <div style={{
                     position: "absolute", top: 0, left: 0, right: 0,
@@ -519,7 +545,7 @@ export default function Dashboard({ user, token, onLogout }) {
                     {[
                       { label: "Amount", value: `₦${group.contributionAmount?.toLocaleString()}` },
                       { label: "Members", value: `${group.memberIds?.length || 0}/${group.totalMembers}` },
-                      { label: "Cycle", value: `${group.currentCycle}/${group.totalCycles}` },
+                      { label: "Cycle", value: group.startedAt ? `${group.currentCycle}/${group.totalCycles}` : "Not started" },
                       { label: "Frequency", value: group.frequency },
                     ].map(({ label, value }) => (
                       <div key={label} style={{
@@ -572,22 +598,24 @@ export default function Dashboard({ user, token, onLogout }) {
                         ₦{c.amount?.toLocaleString()}
                       </p>
                       <p style={{ margin: 0, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>
-                        Cycle {c.cycleNumber} · {c.currency}
+                        {groupName(c.groupId) ? `${groupName(c.groupId)} · ` : ""}Cycle {c.cycleNumber} · {c.currency}
                       </p>
                     </div>
                   </div>
-                  <div style={{ textAlign: "right" }}>
-                    <span style={{
-                      padding: "0.25rem 0.75rem", borderRadius: "20px",
-                      fontSize: "0.75rem", fontWeight: "600",
-                      background: `${statusColor(c.status)}20`,
-                      color: statusColor(c.status)
-                    }}>{c.status}</span>
+                  <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                    {["PENDING", "PROCESSING", "FAILED"].includes(c.status) && (
+                      <button onClick={() => payContribution(c)} disabled={payingId === c.id} style={primaryButton}>
+                        {payingId === c.id ? "Opening..." : c.status === "PENDING" ? "Pay now" : "Pay again"}
+                      </button>
+                    )}
+                    <div>
+                    <StatusPill status={c.status} />
                     {c.dueDate && (
                       <p style={{ margin: "0.25rem 0 0", color: "rgba(255,255,255,0.3)", fontSize: "0.75rem" }}>
                         Due: {new Date(c.dueDate).toLocaleDateString()}
                       </p>
                     )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -627,17 +655,12 @@ export default function Dashboard({ user, token, onLogout }) {
                         ₦{p.amount?.toLocaleString()}
                       </p>
                       <p style={{ margin: 0, color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>
-                        Cycle {p.cycleNumber} · {p.currency}
+                        {groupName(p.groupId) ? `${groupName(p.groupId)} · ` : ""}Cycle {p.cycleNumber} · {p.currency}
                       </p>
                     </div>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <span style={{
-                      padding: "0.25rem 0.75rem", borderRadius: "20px",
-                      fontSize: "0.75rem", fontWeight: "600",
-                      background: `${statusColor(p.status)}20`,
-                      color: statusColor(p.status)
-                    }}>{p.status}</span>
+                    <StatusPill status={p.payoutStatus} />
                     {p.scheduledDate && (
                       <p style={{ margin: "0.25rem 0 0", color: "rgba(255,255,255,0.3)", fontSize: "0.75rem" }}>
                         Scheduled: {new Date(p.scheduledDate).toLocaleDateString()}
@@ -759,6 +782,7 @@ export default function Dashboard({ user, token, onLogout }) {
                 </a>
               </div>
             </div>
+            <BankAccount token={token} />
           </div>
         )}
       </div>

@@ -1,6 +1,5 @@
 import { useState } from "react";
-
-const API_BASE = "http://localhost:8080/api/v1";
+import { api } from "../api";
 
 export default function Login({ onLogin }) {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -17,19 +16,12 @@ export default function Login({ onLogin }) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (data.success) {
-        onLogin(data.data, data.data.token);
-      } else {
-        setError(data.message || "Login failed");
-      }
-    } catch {
-      setError("Connection error. Make sure the server is running.");
+      const data = await api("/auth/login", { method: "POST", body: form });
+      onLogin(data, data.token);
+    } catch (err) {
+      setError(err instanceof TypeError
+        ? "Connection error. Make sure the server is running."
+        : err.message || "Login failed");
     }
     setLoading(false);
   };
@@ -39,19 +31,12 @@ export default function Login({ onLogin }) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(regForm),
-      });
-      const data = await res.json();
-      if (data.success) {
-        onLogin(data.data, data.data.token);
-      } else {
-        setError(data.message || "Registration failed");
-      }
-    } catch {
-      setError("Connection error. Make sure the server is running.");
+      const data = await api("/auth/register", { method: "POST", body: regForm });
+      onLogin(data, data.token);
+    } catch (err) {
+      setError(err instanceof TypeError
+        ? "Connection error. Make sure the server is running."
+        : err.message || "Registration failed");
     }
     setLoading(false);
   };
