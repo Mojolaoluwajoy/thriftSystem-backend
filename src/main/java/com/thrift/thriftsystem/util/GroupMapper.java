@@ -44,6 +44,7 @@ public class GroupMapper {
                 .totalCycles(group.getTotalCycles())
                 .startDate(group.getStartDate())
                 .endDate(group.getEndDate())
+                .startedAt(group.getStartedAt())
                 .frequency(group.getFrequency())
                 .memberIds(group.getMemberIds())
                 .createdAt(group.getCreatedDate())

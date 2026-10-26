@@ -14,6 +14,9 @@ public interface PaystackClient {
     @PostMapping("/transaction/initialize")
     Map<String, Object> initializeTransaction(@RequestBody Map<String, Object> request);
 
+    @GetMapping("/bank")
+    Map<String, Object> listBanks(@RequestParam String country, @RequestParam String currency);
+
     @GetMapping("/transaction/verify/{reference}")
     Map<String, Object> verifyTransaction(@PathVariable String reference);
 

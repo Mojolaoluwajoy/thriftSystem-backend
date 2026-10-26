@@ -71,6 +71,7 @@ http://localhost:8080/swagger-ui/index.html
 | `MONGO_PASSWORD` | MongoDB password |
 | `MONGO_DATABASE` | MongoDB database name |
 | `MONGO_URI` | Full MongoDB connection string (e.g. your Atlas URI) |
+| `FRONTEND_URL` | Frontend address, allowed for CORS and used as Paystack's return URL (default `http://localhost:3000`) |
 | `JWT_SECRET` | JWT secret key (min 64 chars) |
 | `JWT_EXPIRATION` | JWT expiration in milliseconds |
 | `MAIL_USERNAME` | Gmail address |
@@ -128,6 +129,7 @@ group is `COMPLETED`.
 | Method | Endpoint | Description | Auth |
 |---|---|---|---|
 | POST | `/api/v1/payments/initialize/{contributionId}` | Initialize payment | Required |
+| GET | `/api/v1/payments/banks` | Nigerian banks and their Paystack codes | Required |
 
 ### Payouts
 | Method | Endpoint | Description | Auth |

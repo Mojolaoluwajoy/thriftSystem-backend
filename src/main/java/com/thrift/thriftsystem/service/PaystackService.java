@@ -4,9 +4,11 @@ import com.thrift.thriftsystem.exception.BadRequestException;
 import com.thrift.thriftsystem.integration.PaystackClient;
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -15,6 +17,10 @@ import org.springframework.stereotype.Service;
 public class PaystackService {
 
     private final PaystackClient paystackClient;
+
+    // Paystack sends the member back here after checkout
+    @Value("${app.frontend-url:}")
+    private String frontendUrl;
 
     public Map<String, Object> initializePayment(
             String email, BigDecimal amount, String reference) {
@@ -25,6 +31,9 @@ public class PaystackService {
             request.put("amount", toKobo(amount));
             request.put("reference", reference);
             request.put("currency", "NGN");
+            if (frontendUrl != null && !frontendUrl.isBlank()) {
+                request.put("callback_url", frontendUrl + "/?payment=complete");
+            }
 
             Map<String, Object> response = paystackClient.initializeTransaction(request);
 
@@ -50,6 +59,23 @@ public class PaystackService {
         } catch (Exception e) {
             log.error("Payment verification failed: {}", e.getMessage());
             return false;
+        }
+    }
+
+    public List<Map<String, Object>> listBanks() {
+        try {
+            Map<String, Object> response = paystackClient.listBanks("nigeria", "NGN");
+            List<Map<String, Object>> banks = (List<Map<String, Object>>) response.get("data");
+            if (banks == null) {
+                return List.of();
+            }
+            // Only what the bank picker needs
+            return banks.stream()
+                    .map(b -> Map.<String, Object>of("name", b.get("name"), "code", b.get("code")))
+                    .toList();
+        } catch (Exception e) {
+            log.error("Failed to list banks: {}", e.getMessage());
+            throw new BadRequestException("Could not load banks");
         }
     }
 

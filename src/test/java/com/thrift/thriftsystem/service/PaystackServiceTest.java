@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import com.thrift.thriftsystem.exception.BadRequestException;
 import com.thrift.thriftsystem.integration.PaystackClient;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -119,5 +120,48 @@ class PaystackServiceTest {
         String reference = paystackService.generateReference();
         assertNotNull(reference);
         assertTrue(reference.startsWith("THRIFT-"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void initializePayment_SendsReturnUrlWhenFrontendConfigured() {
+        org.springframework.test.util.ReflectionTestUtils.setField(
+                paystackService, "frontendUrl", "https://app.example.com");
+        when(paystackClient.initializeTransaction(any())).thenReturn(Map.of("status", true));
+
+        paystackService.initializePayment("john@example.com", new BigDecimal("10000"), "THRIFT-1");
+
+        org.mockito.ArgumentCaptor<Map<String, Object>> request =
+                org.mockito.ArgumentCaptor.forClass(Map.class);
+        verify(paystackClient).initializeTransaction(request.capture());
+        assertEquals(
+                "https://app.example.com/?payment=complete",
+                request.getValue().get("callback_url"));
+        assertEquals(1000000L, request.getValue().get("amount"));
+    }
+
+    @Test
+    void listBanks_ReturnsNameAndCodeOnly() {
+        when(paystackClient.listBanks("nigeria", "NGN"))
+                .thenReturn(
+                        Map.of(
+                                "status",
+                                true,
+                                "data",
+                                List.of(
+                                        Map.of("name", "Access Bank", "code", "044", "id", 1),
+                                        Map.of("name", "GTBank", "code", "058", "id", 9))));
+
+        List<Map<String, Object>> banks = paystackService.listBanks();
+
+        assertEquals(2, banks.size());
+        assertEquals(Map.of("name", "Access Bank", "code", "044"), banks.get(0));
+    }
+
+    @Test
+    void listBanks_PaystackError_ThrowsBadRequest() {
+        when(paystackClient.listBanks(any(), any())).thenThrow(new RuntimeException("down"));
+
+        assertThrows(BadRequestException.class, () -> paystackService.listBanks());
     }
 }

@@ -2,6 +2,7 @@ package com.thrift.thriftsystem.controller;
 
 import com.thrift.thriftsystem.dto.response.ApiResponse;
 import com.thrift.thriftsystem.service.PaymentService;
+import com.thrift.thriftsystem.service.PaystackService;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,13 @@ import org.springframework.web.bind.annotation.*;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final PaystackService paystackService;
+
+    @GetMapping("/banks")
+    public ResponseEntity<ApiResponse> listBanks() {
+        return new ResponseEntity<>(
+                ApiResponse.success("Banks retrieved", paystackService.listBanks()), HttpStatus.OK);
+    }
 
     @PostMapping("/initialize/{contributionId}")
     public ResponseEntity<ApiResponse> initializePayment(@PathVariable String contributionId) {

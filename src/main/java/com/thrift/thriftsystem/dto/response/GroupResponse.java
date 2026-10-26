@@ -29,6 +29,7 @@ public class GroupResponse {
     private Integer totalCycles;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
+    private LocalDateTime startedAt;
     private ContributionFrequency frequency;
     private List<String> memberIds;
     private List<String> memberNames;
