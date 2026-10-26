@@ -19,7 +19,7 @@ public class JwtUtil {
     private String jwtSecret;
 
     @Value("${app.jwt.expiration}")
-    private String jwtExpiration;
+    private long jwtExpiration;
 
     public String generateToken(String email) {
         Map<String, Object> claims = new HashMap<>();
@@ -48,6 +48,9 @@ public class JwtUtil {
             log.error("jwt token malformed: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
             log.error("jwt claims empty: {}", e.getMessage());
+        } catch (JwtException e) {
+            // Includes signature mismatches, e.g. a forged token or one from another secret
+            log.error("jwt token invalid: {}", e.getMessage());
         }
         return false;
     }
